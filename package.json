@@ -1,0 +1,118 @@
+{
+  "name": "update-day",
+  "version": "0.1.0",
+  "description": "A Discord bot to notify you about website changes",
+  "repository": "git@github.com:Kounex/update-day.git",
+  "author": "Kounex <r.schramowski@googlemail.com>",
+  "license": "MIT",
+  "private": true,
+  "types": "dts/types",
+  "type": "module",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run lint",
+    "start": "npm run",
+    "dev": "tsx watch src/scripts/start.ts",
+    "release": "release-it",
+    "build": "tsc",
+    "postinstall": "patch-package"
+  },
+  "devDependencies": {
+    "@release-it/keep-a-changelog": "^5.0.0",
+    "@types/bluebird": "^3.5.42",
+    "@types/debug": "^4.1.12",
+    "@types/fs-capacitor": "^2.0.0",
+    "@types/ms": "0.7.34",
+    "@types/node": "^20.12.13",
+    "@types/node-emoji": "^1.8.2",
+    "@types/validator": "^13.11.10",
+    "@types/ws": "8.5.10",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
+    "@typescript-eslint/parser": "^7.11.0",
+    "eslint": "^8.56.0",
+    "eslint-config-xo": "^0.45.0",
+    "eslint-config-xo-typescript": "^4.0.0",
+    "eslint-plugin-import": "2.29.1",
+    "husky": "^9.0.11",
+    "prisma": "5.14.0",
+    "release-it": "^17.3.0",
+    "type-fest": "^2.12.0",
+    "typescript": "^5.4.5"
+  },
+  "eslintConfig": {
+    "extends": [
+      "xo",
+      "xo-typescript/space"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": "./tsconfig.json"
+    },
+    "plugins": [
+      "import"
+    ],
+    "rules": {
+      "new-cap": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars-experimental": "error",
+      "@typescript-eslint/prefer-readonly-parameter-types": "off",
+      "@typescript-eslint/no-implicit-any-catch": "off",
+      "import/extensions": [
+        "error",
+        "ignorePackages"
+      ]
+    }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm test"
+    }
+  },
+  "dependencies": {
+    "@discordjs/builders": "1.8.1",
+    "@discordjs/opus": "^0.9.0",
+    "@discordjs/rest": "2.3.0",
+    "@discordjs/voice": "0.17.0",
+    "@prisma/client": "5.14.0",
+    "@types/libsodium-wrappers": "^0.7.14",
+    "array-shuffle": "^3.0.0",
+    "debug": "^4.3.5",
+    "delay": "^6.0.0",
+    "discord-api-types": "0.37.86",
+    "discord.js": "14.15.2",
+    "dotenv": "^16.4.5",
+    "execa": "^9.1.0",
+    "fs-capacitor": "^8.0.0",
+    "got": "^14.3.0",
+    "hasha": "^6.0.0",
+    "inversify": "^6.0.2",
+    "iso8601-duration": "^2.1.2",
+    "libsodium-wrappers": "^0.7.13",
+    "make-dir": "^5.0.0",
+    "node-emoji": "^2.1.3",
+    "nodesplash": "^0.1.1",
+    "ora": "^8.0.1",
+    "p-event": "^6.0.1",
+    "p-limit": "^5.0.0",
+    "p-queue": "^8.0.1",
+    "p-retry": "6.2.0",
+    "pagination.djs": "^4.0.15",
+    "parse-duration": "1.1.0",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
+    "read-pkg": "9.0.1",
+    "reflect-metadata": "^0.2.2",
+    "tsx": "4.11.0"
+  },
+  "resolutions": {
+    "@types/ws": "8.5.4"
+  }
+}
