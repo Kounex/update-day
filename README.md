@@ -7,3 +7,7 @@ Code base is based on [muse](https://github.com/codetheweb/muse) (awesome Discor
 ## Commands
 
 TODO
+
+## Installation
+
+DISCORD_TOKEN can be acquired (here)[https://discordapp.com/developers/applications] by creating a 'New Application', then going to 'Bot'.

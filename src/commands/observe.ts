@@ -6,6 +6,8 @@ import {
 import { inject, injectable } from 'inversify';
 import ScrapeManager from '../managers/scrape';
 import { TYPES } from '../types';
+import { Observe } from '../types/models/observe';
+import { buildObserveEmbed } from '../utils/build-embed';
 import Command from './command';
 
 @injectable()
@@ -13,6 +15,13 @@ export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('observe')
     .setDescription('Observe a website')
+    .addStringOption((option) =>
+      option
+        .setName('name')
+        .setDescription('Name so you can recognize and manage it later')
+        .setAutocomplete(true)
+        .setRequired(true)
+    )
     .addStringOption((option) =>
       option
         .setName('url')
@@ -40,7 +49,7 @@ export default class implements Command {
       option
         .setName('dom-element-property')
         .setDescription(
-          'By default, the bot will check the `innerText` of the element behind the CSS-Selector, here you can define another property to look out for (like data, href etc.)'
+          'By default, the bot will check the `innerText`, can also be href, data, value etc.'
         )
     );
 
@@ -53,6 +62,7 @@ export default class implements Command {
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
+    const name = interaction.options.getString('name')!;
     const url = interaction.options.getString('url')!;
     const cssSelector = interaction.options.getString('css-selector')!;
     const currentText = interaction.options.getString('current-text')!;
@@ -60,7 +70,21 @@ export default class implements Command {
       'dom-element-property'
     );
 
-    // Add scrape logic
+    const observe = new Observe(
+      name,
+      url,
+      cssSelector,
+      currentText,
+      domElementProperty
+    );
+
+    // TODO: add scapemanager logic
+
+    await interaction.reply({
+      content: '',
+      embeds: [buildObserveEmbed(observe)],
+      ephemeral: true,
+    });
   }
 
   public async handleAutocompleteInteraction(
