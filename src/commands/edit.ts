@@ -93,9 +93,7 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    const focusedOption = interaction.options.getFocused(true);
-
-    switch (focusedOption.name) {
+    switch (interaction.commandName) {
       case 'url': {
         // const url = interaction.options.getString('url')?.trim();
 

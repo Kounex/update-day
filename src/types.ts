@@ -6,5 +6,7 @@ export const TYPES = {
   Managers: {
     Scrape: Symbol('ScrapeManager'),
   },
-  Services: {},
+  Services: {
+    Scrape: Symbol('Scrape'),
+  },
 };

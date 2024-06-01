@@ -1,8 +1,8 @@
 import { REST } from '@discordjs/rest';
 import { Client, Guild } from 'discord.js';
 import Command from '../commands/command';
+import Config from '../config';
 import container from '../inversify.config';
-import Config from '../services/config';
 import { TYPES } from '../types';
 import registerCommandsOnGuild from '../utils/register-commands-on-guild';
 
