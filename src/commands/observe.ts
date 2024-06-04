@@ -62,29 +62,21 @@ export default class implements Command {
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
-    const name = interaction.options.getString('name')!;
-    const url = interaction.options.getString('url')!;
-    const cssSelector = interaction.options.getString('css-selector')!;
-    const currentText = interaction.options.getString('current-text')!;
-    const domElementProperty = interaction.options.getString(
-      'dom-element-property'
-    );
-
     const observe = new Observe(
       interaction.user.id,
       Date.now(),
       Date.now(),
-      name,
-      url,
-      cssSelector,
-      currentText,
-      domElementProperty
+      interaction.options.getString('name')!,
+      interaction.options.getString('url')!,
+      interaction.options.getString('css-selector')!,
+      interaction.options.getString('current-text')!,
+      interaction.options.getString('dom-element-property')
     );
 
-    this.scrapeManager.addObserve(observe);
+    const result = await this.scrapeManager.addObserve(observe);
 
     await interaction.reply({
-      content: '',
+      content: result.message,
       embeds: [buildObserveEmbed(observe)],
       ephemeral: true,
     });

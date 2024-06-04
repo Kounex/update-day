@@ -1,5 +1,19 @@
 import { EmbedBuilder } from 'discord.js';
+import { CommandResult } from '../types/interfaces/command-result';
 import { Observe } from '../types/models/observe';
+
+export const buildCommandResultEmbed = (
+  commandResult: CommandResult
+): EmbedBuilder => {
+  const message = new EmbedBuilder();
+
+  message
+    .setTitle(commandResult.successful ? 'Success!' : 'Error!')
+    .setColor(commandResult.successful ? 'DarkGreen' : 'DarkRed')
+    .setDescription(commandResult.message ?? 'Command was successful!');
+
+  return message;
+};
 
 export const buildObserveEmbed = (observe: Observe): EmbedBuilder => {
   const message = new EmbedBuilder();

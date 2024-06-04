@@ -109,6 +109,7 @@
     "parse-duration": "1.1.0",
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
+    "puppeteer": "^22.10.0",
     "read-pkg": "9.0.1",
     "reflect-metadata": "^0.2.2",
     "tsx": "4.11.0"

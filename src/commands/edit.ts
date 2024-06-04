@@ -7,14 +7,21 @@ import { inject, injectable } from 'inversify';
 import ScrapeManager from '../managers/scrape';
 import { TYPES } from '../types';
 import { Observe } from '../types/models/observe';
-import { buildObserveEmbed } from '../utils/build-embed';
+import { buildCommandResultEmbed } from '../utils/build-embed';
 import Command from './command';
 
 @injectable()
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
-    .setName('observe')
-    .setDescription('Observe a website')
+    .setName('edit')
+    .setDescription('Edit one of your existing observes')
+    .addStringOption((option) =>
+      option
+        .setName('current-name')
+        .setDescription('Name so you can recognize and manage it later')
+        .setAutocomplete(true)
+        .setRequired(true)
+    )
     .addStringOption((option) =>
       option
         .setName('name')
@@ -62,12 +69,14 @@ export default class implements Command {
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
+    const currentName = interaction.options.getString('current-name')!;
     const name = interaction.options.getString('name')!;
     const url = interaction.options.getString('url')!;
     const cssSelector = interaction.options.getString('css-selector')!;
     const currentText = interaction.options.getString('current-text')!;
     const domElementProperty = interaction.options.getString(
-      'dom-element-property'
+      'dom-element-property',
+      false
     );
 
     const observe = new Observe(
@@ -81,41 +90,113 @@ export default class implements Command {
       domElementProperty
     );
 
-    this.scrapeManager.addObserve(observe);
+    const commandResult = this.scrapeManager.editObserve(currentName, observe);
 
     await interaction.reply({
-      content: '',
-      embeds: [buildObserveEmbed(observe)],
+      embeds: [buildCommandResultEmbed(commandResult)],
       ephemeral: true,
     });
+
+    // if (commandResult.successful) {
+    //   await interaction.reply({
+    //     content: '',
+    //     embeds: [buildObserveEmbed(observe)],
+    //     ephemeral: true,
+    //   });
+    // } else {
+    //   await interaction.reply({
+    //     embeds: [buildCommandResultEmbed(commandResult)],
+    //     ephemeral: true,
+    //   });
+    // }
   }
 
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    switch (interaction.commandName) {
+    var options: string[] = [];
+    const currentName = interaction.options.getString('current-name');
+    const focusedOption = interaction.options.getFocused(true);
+
+    switch (focusedOption.name) {
+      case 'current-name': {
+        options = this.scrapeManager.observers
+          .filter((observe) => observe.userId == interaction.user.id)
+          .map((observe) => observe.name);
+        break;
+      }
+      case 'name': {
+        if (currentName != null) {
+          const observe = this.scrapeManager.observers.find(
+            (observe) =>
+              observe.userId == interaction.user.id &&
+              observe.name == currentName
+          );
+          if (!!observe) {
+            options = [observe!.name];
+          }
+        }
+        break;
+      }
       case 'url': {
-        // const url = interaction.options.getString('url')?.trim();
-
-        // if (!url || url.length === 0) {
-        //   await interaction.respond([]);
-        //   return;
-        // }
-
-        // await interaction.respond(['https://discogs.com']);
+        if (currentName != null) {
+          const observe = this.scrapeManager.observers.find(
+            (observe) =>
+              observe.userId == interaction.user.id &&
+              observe.name == currentName
+          );
+          if (!!observe) {
+            options = [observe!.url];
+          }
+        }
         break;
       }
       case 'css-selector': {
+        if (currentName != null) {
+          const observe = this.scrapeManager.observers.find(
+            (observe) =>
+              observe.userId == interaction.user.id &&
+              observe.name == currentName
+          );
+          if (!!observe) {
+            options = [observe!.cssSelector];
+          }
+        }
         break;
       }
       case 'current-text': {
+        if (currentName != null) {
+          const observe = this.scrapeManager.observers.find(
+            (observe) =>
+              observe.userId == interaction.user.id &&
+              observe.name == currentName
+          );
+          if (!!observe) {
+            options = [observe!.currentText];
+          }
+        }
         break;
       }
       case 'dom-element-property': {
+        if (currentName != null) {
+          const observe = this.scrapeManager.observers.find(
+            (observe) =>
+              observe.userId == interaction.user.id &&
+              observe.name == currentName
+          );
+          if (!!observe) {
+            options =
+              observe!.domElementProperty != null
+                ? [observe!.domElementProperty!]
+                : [];
+          }
+        }
         break;
       }
     }
 
-    await interaction.respond([]);
+    await interaction.respond(
+      options.map((option) => ({ name: option, value: option }))
+    );
   }
 }

@@ -6,6 +6,7 @@ import {
 import { inject, injectable } from 'inversify';
 import ScrapeManager from '../managers/scrape';
 import { TYPES } from '../types';
+import { buildCommandResultEmbed } from '../utils/build-embed';
 import Command from './command';
 
 @injectable()
@@ -30,21 +31,17 @@ export default class implements Command {
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
-    const name = interaction.options.getString('name');
+    const name = interaction.options.getString('name')!;
 
-    if (this.scrapeManager.deleteObserve(interaction.user.id, name)) {
-      await interaction.reply({
-        content: 'Deleted.',
-        // embeds: [buildObserveEmbed(observe)],
-        ephemeral: true,
-      });
-    } else {
-      await interaction.reply({
-        content: 'No observe with this name found, so nothing got deleted.',
-        // embeds: [buildObserveEmbed(observe)],
-        ephemeral: true,
-      });
-    }
+    const commandResult = this.scrapeManager.deleteObserve(
+      interaction.user.id,
+      name
+    );
+
+    await interaction.reply({
+      embeds: [buildCommandResultEmbed(commandResult)],
+      ephemeral: true,
+    });
   }
 
   public async handleAutocompleteInteraction(
@@ -56,7 +53,7 @@ export default class implements Command {
 
     const userText = interaction.options.getFocused();
 
-    if (userText.length > 0) {
+    if (userText.trim().length > 0) {
       observers = observers.filter((observe) =>
         observe.name
           .toLocaleLowerCase()
