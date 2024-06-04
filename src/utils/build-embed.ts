@@ -8,22 +8,30 @@ export const buildCommandResultEmbed = (
   const message = new EmbedBuilder();
 
   message
-    .setTitle(commandResult.successful ? 'Success!' : 'Error!')
+    .setTitle(commandResult.successful ? 'Success' : 'Error')
     .setColor(commandResult.successful ? 'DarkGreen' : 'DarkRed')
     .setDescription(commandResult.message ?? 'Command was successful!');
 
   return message;
 };
 
-export const buildObserveEmbed = (observe: Observe): EmbedBuilder => {
+export const buildObserveEmbed = (
+  observe: Observe,
+  description?: string
+): EmbedBuilder => {
   const message = new EmbedBuilder();
 
   message
     .setTitle(observe.name)
     .setColor('DarkGreen')
-    // .setDescription(description)
+    .setDescription(description ?? observe.url)
     .addFields([
-      { name: 'CSS-Selector', value: observe.cssSelector, inline: true },
+      {
+        name: 'CSS-Selector',
+        value: observe.cssSelector,
+        inline: true,
+      },
+      { name: '　', value: '　', inline: true },
       {
         name: 'Current Text',
         value: observe.currentText,
@@ -32,14 +40,17 @@ export const buildObserveEmbed = (observe: Observe): EmbedBuilder => {
       {
         name: 'DOM Element Property',
         value: observe.domElementProperty ?? 'innerText',
-        inline: true,
       },
-    ])
-    .setFooter({ text: `URL: ${observe.url}` });
+    ]);
+  // .setFooter({ text: `URL: ${observe.url}` });
 
-  // if (thumbnailUrl) {
-  //   message.setThumbnail(thumbnailUrl);
-  // }
+  const pathArray = observe.url.split('/');
+  const protocol = pathArray[0];
+  const host = pathArray[2];
+
+  const favicon = `${protocol}//${host}/favicon.png`;
+
+  // message.setThumbnail(favicon);
 
   return message;
 };

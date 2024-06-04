@@ -22,11 +22,9 @@ export default class implements Command {
         .setRequired(true)
     );
 
-  private readonly scrapeManager: ScrapeManager;
-
-  constructor(@inject(TYPES.Managers.Scrape) scrapeManager: ScrapeManager) {
-    this.scrapeManager = scrapeManager;
-  }
+  constructor(
+    @inject(TYPES.Managers.Scrape) private readonly scrapeManager: ScrapeManager
+  ) {}
 
   public async execute(
     interaction: ChatInputCommandInteraction

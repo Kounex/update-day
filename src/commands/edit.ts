@@ -60,11 +60,9 @@ export default class implements Command {
         )
     );
 
-  private readonly scrapeManager: ScrapeManager;
-
-  constructor(@inject(TYPES.Managers.Scrape) scrapeManager: ScrapeManager) {
-    this.scrapeManager = scrapeManager;
-  }
+  constructor(
+    @inject(TYPES.Managers.Scrape) private readonly scrapeManager: ScrapeManager
+  ) {}
 
   public async execute(
     interaction: ChatInputCommandInteraction
@@ -79,7 +77,7 @@ export default class implements Command {
       false
     );
 
-    const observe = new Observe(
+    const observe = Observe.create(
       interaction.user.id,
       Date.now(),
       Date.now(),
@@ -90,12 +88,27 @@ export default class implements Command {
       domElementProperty
     );
 
-    const commandResult = this.scrapeManager.editObserve(currentName, observe);
+    if (observe instanceof Observe) {
+      const commandResult = this.scrapeManager.editObserve(
+        currentName,
+        observe
+      );
 
-    await interaction.reply({
-      embeds: [buildCommandResultEmbed(commandResult)],
-      ephemeral: true,
-    });
+      await interaction.reply({
+        embeds: [buildCommandResultEmbed(commandResult)],
+        ephemeral: true,
+      });
+    } else {
+      await interaction.reply({
+        embeds: [
+          buildCommandResultEmbed({
+            successful: false,
+            message: observe.message,
+          }),
+        ],
+        ephemeral: true,
+      });
+    }
 
     // if (commandResult.successful) {
     //   await interaction.reply({

@@ -15,18 +15,14 @@ import registerCommandsOnGuild from './utils/register-commands-on-guild';
 
 @injectable()
 export default class {
-  private readonly client: Client;
-  private readonly config: Config;
   private readonly shouldRegisterCommandsOnBot: boolean;
   private readonly commandsByName!: Collection<string, Command>;
   private readonly commandsByButtonId!: Collection<string, Command>;
 
   constructor(
-    @inject(TYPES.Client) client: Client,
-    @inject(TYPES.Config) config: Config
+    @inject(TYPES.Client) private readonly client: Client,
+    @inject(TYPES.Config) private readonly config: Config
   ) {
-    this.client = client;
-    this.config = config;
     this.shouldRegisterCommandsOnBot = config.REGISTER_COMMANDS_ON_BOT;
     this.commandsByName = new Collection();
     this.commandsByButtonId = new Collection();

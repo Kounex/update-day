@@ -85,6 +85,7 @@
     "@types/libsodium-wrappers": "^0.7.14",
     "array-shuffle": "^3.0.0",
     "class-transformer": "^0.5.1",
+    "css-what": "^6.1.0",
     "debug": "^4.3.5",
     "delay": "^6.0.0",
     "discord-api-types": "0.37.86",

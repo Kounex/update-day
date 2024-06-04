@@ -8,16 +8,14 @@ import { Observe } from '../types/models/observe';
 export default class {
   public readonly observers: Observe[] = [];
 
-  private readonly scrapeService: ScrapeService;
-
-  constructor(@inject(TYPES.Services.Scrape) scrapeService: ScrapeService) {
-    this.scrapeService = scrapeService;
-  }
+  constructor(
+    @inject(TYPES.Services.Scrape) private readonly scrapeService: ScrapeService
+  ) {}
 
   public async addObserve(observe: Observe): Promise<CommandResult> {
     this.observers.push(observe);
 
-    const scrapeResult = await this.scrapeService.observe(observe);
+    const scrapeResult = await this.scrapeService.observe(observe, true);
 
     return {
       successful: scrapeResult.successful,
@@ -56,33 +54,42 @@ export default class {
       };
     }
 
-    // Trying to find the original observe, delete it and add the new (edited) one.
-    // If none has been returned, none has been deleted, so abort edit
-    if (
-      this.observers.splice(
-        this.observers.indexOf(currentObserve),
-        1,
-        new Observe(
-          editedObserve.userId,
-          currentObserve.createdAtMS,
-          Date.now(),
-          editedObserve.name,
-          editedObserve.url,
-          editedObserve.cssSelector,
-          editedObserve.currentText,
-          editedObserve.domElementProperty
-        )
-      ).length != 1
-    ) {
+    const newObserve = Observe.create(
+      editedObserve.userId,
+      currentObserve.createdAtMS,
+      Date.now(),
+      editedObserve.name,
+      editedObserve.url,
+      editedObserve.cssSelector,
+      editedObserve.currentText,
+      editedObserve.domElementProperty
+    );
+
+    if (newObserve instanceof Observe) {
+      // Trying to find the original observe, delete it and add the new (edited) one.
+      // If none has been returned, none has been deleted, so abort edit
+      if (
+        this.observers.splice(
+          this.observers.indexOf(currentObserve),
+          1,
+          newObserve
+        ).length != 1
+      ) {
+        return {
+          successful: false,
+          message: 'Could not edit your observe - check the bot logs I guess?!',
+        };
+      }
+
+      return {
+        successful: true,
+      };
+    } else {
       return {
         successful: false,
-        message: 'Could not edit your observe - check the bot logs I guess?!',
+        message: newObserve.message,
       };
     }
-
-    return {
-      successful: true,
-    };
   }
 
   public deleteObserve(userId: string, name: string): CommandResult {

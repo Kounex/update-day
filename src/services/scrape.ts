@@ -11,16 +11,48 @@ export default class ScrapeService {
     this._browser = puppeteer.launch();
   }
 
-  async observe(observe: Observe): Promise<ScrapeResult> {
-    // const page = await (await this._browser).newPage();
+  async observe(observe: Observe, initial?: boolean): Promise<ScrapeResult> {
+    const page = await (await this._browser).newPage();
 
-    // await page.goto(observe.url);
-    // const element = await page.$(observe.cssSelector);
+    await page.goto(observe.url);
 
-    // if (element == null) {
-    //   return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
-    // }
+    var element;
+    try {
+      element = await page.waitForSelector(observe.cssSelector);
 
-    return new ScrapeResult(observe, ScrapeResultType.Unknown);
+      if (element == null) {
+        throw Error;
+      }
+    } catch (_) {
+      return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
+    }
+
+    var text;
+    try {
+      text = await element.evaluate((el) => el.textContent);
+
+      if (
+        !!initial &&
+        (text == null ||
+          text == undefined ||
+          text.toLocaleLowerCase().trim() !=
+            observe.currentText.toLocaleLowerCase().trim())
+      ) {
+        throw Error;
+      }
+    } catch (_) {
+      return new ScrapeResult(observe, ScrapeResultType.TextNotFound);
+    }
+
+    if (
+      text == null ||
+      text == undefined ||
+      text.toLocaleLowerCase().trim() !=
+        observe.currentText.toLocaleLowerCase().trim()
+    ) {
+      return new ScrapeResult(observe, ScrapeResultType.Change);
+    }
+
+    return new ScrapeResult(observe, ScrapeResultType.NoChange);
   }
 }

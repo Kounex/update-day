@@ -5,7 +5,6 @@ FROM node:18.7.0-slim AS base
 # Install ffmpeg
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
-    ffmpeg \
     tini \
     openssl \
     ca-certificates \
@@ -32,7 +31,7 @@ FROM dependencies AS builder
 COPY . .
 
 # Run tsc build
-RUN yarn prisma generate
+# RUN yarn prisma generate
 RUN yarn build
 
 # Only keep what's necessary to run
@@ -42,7 +41,7 @@ WORKDIR /usr/app
 
 COPY --from=builder /usr/app/dist ./dist
 COPY --from=dependencies /usr/app/prod_node_modules node_modules
-COPY --from=builder /usr/app/node_modules/.prisma/client ./node_modules/.prisma/client
+# COPY --from=builder /usr/app/node_modules/.prisma/client ./node_modules/.prisma/client
 
 COPY . .
 
@@ -54,4 +53,4 @@ ENV NODE_ENV production
 # ENV COMMIT_HASH $COMMIT_HASH
 # ENV BUILD_DATE $BUILD_DATE
 
-CMD ["tini", "--", "node", "--enable-source-maps", "dist/scripts/migrate-and-start.js"]
+CMD ["tini", "--", "node", "--enable-source-maps", "dist/scripts/start.js"]

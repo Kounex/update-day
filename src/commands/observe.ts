@@ -1,13 +1,13 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import {
-  AutocompleteInteraction,
-  ChatInputCommandInteraction,
-} from 'discord.js';
+import { ChatInputCommandInteraction } from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ScrapeManager from '../managers/scrape';
 import { TYPES } from '../types';
 import { Observe } from '../types/models/observe';
-import { buildObserveEmbed } from '../utils/build-embed';
+import {
+  buildCommandResultEmbed,
+  buildObserveEmbed,
+} from '../utils/build-embed';
 import Command from './command';
 
 @injectable()
@@ -19,30 +19,28 @@ export default class implements Command {
       option
         .setName('name')
         .setDescription('Name so you can recognize and manage it later')
-        .setAutocomplete(true)
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('url')
-        .setDescription('Website URL')
-        .setAutocomplete(true)
+        .setDescription(
+          'Website URL to observe | e.g. https://www.lttstore.com/products/screwdriver-t-shirt'
+        )
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('css-selector')
-        .setDescription('CSS-Selector to look out for')
-        .setAutocomplete(true)
+        .setDescription('CSS-Selector to look out for | e.g. #kbis-anchor > a')
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('current-text')
         .setDescription(
-          'What text is currently behind the CSS-Selector (if this changes, you will get notified)'
+          'Text found with CSS-Selector (if this changes or element not found, you will get notified)'
         )
-        .setAutocomplete(true)
         .setRequired(true)
     )
     .addStringOption((option) =>
@@ -53,16 +51,14 @@ export default class implements Command {
         )
     );
 
-  private readonly scrapeManager: ScrapeManager;
-
-  constructor(@inject(TYPES.Managers.Scrape) scrapeManager: ScrapeManager) {
-    this.scrapeManager = scrapeManager;
-  }
+  constructor(
+    @inject(TYPES.Managers.Scrape) private readonly scrapeManager: ScrapeManager
+  ) {}
 
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
-    const observe = new Observe(
+    const observe = Observe.create(
       interaction.user.id,
       Date.now(),
       Date.now(),
@@ -73,43 +69,35 @@ export default class implements Command {
       interaction.options.getString('dom-element-property')
     );
 
-    const result = await this.scrapeManager.addObserve(observe);
+    if (observe instanceof Observe) {
+      const result = await this.scrapeManager.addObserve(observe);
 
-    await interaction.reply({
-      content: result.message,
-      embeds: [buildObserveEmbed(observe)],
-      ephemeral: true,
-    });
-  }
-
-  public async handleAutocompleteInteraction(
-    interaction: AutocompleteInteraction
-  ): Promise<void> {
-    const focusedOption = interaction.options.getFocused(true);
-
-    switch (focusedOption.name) {
-      case 'url': {
-        // const url = interaction.options.getString('url')?.trim();
-
-        // if (!url || url.length === 0) {
-        //   await interaction.respond([]);
-        //   return;
-        // }
-
-        // await interaction.respond(['https://discogs.com']);
-        break;
+      if (result.successful) {
+        await interaction.reply({
+          embeds: [buildObserveEmbed(observe)],
+          ephemeral: true,
+        });
+      } else {
+        await interaction.reply({
+          embeds: [
+            buildCommandResultEmbed({
+              successful: false,
+              message: result.message,
+            }),
+          ],
+          ephemeral: true,
+        });
       }
-      case 'css-selector': {
-        break;
-      }
-      case 'current-text': {
-        break;
-      }
-      case 'dom-element-property': {
-        break;
-      }
+    } else {
+      await interaction.reply({
+        embeds: [
+          buildCommandResultEmbed({
+            successful: false,
+            message: observe.message,
+          }),
+        ],
+        ephemeral: true,
+      });
     }
-
-    await interaction.respond([]);
   }
 }
