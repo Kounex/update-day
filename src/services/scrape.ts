@@ -18,7 +18,9 @@ export default class ScrapeService {
 
     var element;
     try {
-      element = await page.waitForSelector(observe.cssSelector);
+      element = await page.waitForSelector(observe.cssSelector, {
+        timeout: 10_000,
+      });
 
       if (element == null) {
         throw Error;
@@ -35,8 +37,10 @@ export default class ScrapeService {
         !!initial &&
         (text == null ||
           text == undefined ||
-          text.toLocaleLowerCase().trim() !=
-            observe.currentText.toLocaleLowerCase().trim())
+          !text
+            .toLocaleLowerCase()
+            .trim()
+            .includes(observe.currentText.toLocaleLowerCase().trim()))
       ) {
         throw Error;
       }
@@ -47,8 +51,10 @@ export default class ScrapeService {
     if (
       text == null ||
       text == undefined ||
-      text.toLocaleLowerCase().trim() !=
-        observe.currentText.toLocaleLowerCase().trim()
+      !text
+        .toLocaleLowerCase()
+        .trim()
+        .includes(observe.currentText.toLocaleLowerCase().trim())
     ) {
       return new ScrapeResult(observe, ScrapeResultType.Change);
     }

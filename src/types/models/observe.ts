@@ -1,35 +1,83 @@
 import { parse } from 'css-what';
 
+export enum ScrapeIntervalType {
+  OneMinute,
+  FiveMinutes,
+  FifteenMinutes,
+  Hourly,
+  Daily,
+}
+
+export class ScrapeInterval {
+  public constructor(
+    public readonly type: ScrapeIntervalType = ScrapeIntervalType.Hourly
+  ) {}
+
+  public static toEnumType(type: string): ScrapeIntervalType {
+    return ScrapeIntervalType[type as keyof typeof ScrapeIntervalType];
+  }
+
+  public static get enumValues(): string[] {
+    return Object.keys(ScrapeIntervalType).filter((item) => {
+      return isNaN(Number(item));
+    });
+  }
+
+  public get durationMS(): number {
+    switch (this.type) {
+      case ScrapeIntervalType.OneMinute: {
+        return 60 * 1000;
+      }
+      case ScrapeIntervalType.FiveMinutes: {
+        return 5 * 60 * 1000;
+      }
+      case ScrapeIntervalType.FifteenMinutes: {
+        return 15 * 60 * 1000;
+      }
+      case ScrapeIntervalType.Hourly: {
+        return 60 * 60 * 1000;
+      }
+      case ScrapeIntervalType.Daily: {
+        return 24 * 60 * 60 * 1000;
+      }
+    }
+  }
+}
+
 export class Observe {
   private constructor(
     public readonly userId: string,
-    public readonly createdAtMS: number,
-    public readonly updatedAtMS: number,
+    public readonly createdAtMS: bigint,
+    public readonly updatedAtMS: bigint,
     public readonly name: string,
     public readonly url: string,
     public readonly cssSelector: string,
     public readonly currentText: string,
-    public readonly domElementProperty: string | null
+    public readonly domElementProperty: string | null,
+    public readonly scrapeInterval: ScrapeInterval,
+    public readonly lastScrapeAtMS: bigint
   ) {}
 
   public static create(
     userId: string,
-    createdAtMS: number,
-    updatedAtMS: number,
+    createdAtMS: number | bigint,
+    updatedAtMS: number | bigint,
     name: string,
     url: string,
     cssSelector: string,
     currentText: string,
-    domElementProperty: string | null
+    scrapeInterval: string | ScrapeInterval | null,
+    domElementProperty?: string | null,
+    lastScrapeAtMS?: number | bigint | null
   ): Observe | Error {
-    if (!this.isValidURL(url)) {
+    if (!this.isValidURL(url.trim())) {
       return {
         name: 'NotValidAttribute',
         message:
           'Not a valid URL - has comply with the `URL` spec in general and contain `http` / `https`!',
       };
     }
-    if (!this.isValidCSSSelector(cssSelector)) {
+    if (!this.isValidCSSSelector(cssSelector.trim())) {
       return {
         name: 'NotValidAttribute',
         message: 'Not a valid CSS-Selector!',
@@ -38,14 +86,65 @@ export class Observe {
 
     return new Observe(
       userId,
-      createdAtMS,
-      updatedAtMS,
-      name,
-      url,
-      cssSelector,
-      currentText,
-      domElementProperty
+      BigInt(createdAtMS),
+      BigInt(updatedAtMS),
+      name.trim(),
+      url.trim(),
+      cssSelector.trim(),
+      currentText.trim(),
+      domElementProperty?.trim() ?? null,
+      scrapeInterval instanceof ScrapeInterval
+        ? scrapeInterval
+        : new ScrapeInterval(
+            scrapeInterval != null
+              ? ScrapeInterval.toEnumType(scrapeInterval)
+              : ScrapeIntervalType.Hourly
+          ),
+      BigInt(lastScrapeAtMS ?? 0)
     );
+  }
+
+  public static fromPrisma(observe: {
+    userId: string;
+    createdAtMS: bigint;
+    updatedAtMS: bigint;
+    name: string;
+    url: string;
+    cssSelector: string;
+    currentText: string;
+    domElementProperty: string | null;
+    scrapeIntervalType: string;
+    lastScrapeAtMS: bigint;
+  }) {
+    return new Observe(
+      observe.userId,
+      observe.createdAtMS,
+      observe.updatedAtMS,
+      observe.name,
+      observe.url,
+      observe.cssSelector,
+      observe.currentText,
+      observe.domElementProperty,
+      new ScrapeInterval(ScrapeInterval.toEnumType(observe.scrapeIntervalType)),
+      observe.lastScrapeAtMS
+    );
+  }
+
+  public toPrisma() {
+    return {
+      data: {
+        userId: this.userId,
+        createdAtMS: this.createdAtMS,
+        updatedAtMS: this.updatedAtMS,
+        name: this.name,
+        url: this.url,
+        cssSelector: this.cssSelector,
+        currentText: this.currentText,
+        domElementProperty: this.domElementProperty,
+        scrapeIntervalType: ScrapeIntervalType[this.scrapeInterval.type],
+        lastScrapeAtMS: this.lastScrapeAtMS,
+      },
+    };
   }
 
   public toString(): string {

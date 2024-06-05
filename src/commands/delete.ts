@@ -4,7 +4,7 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
-import ScrapeManager from '../managers/scrape';
+import ObserveManager from '../managers/observe';
 import { TYPES } from '../types';
 import { buildCommandResultEmbed } from '../utils/build-embed';
 import Command from './command';
@@ -23,7 +23,8 @@ export default class implements Command {
     );
 
   constructor(
-    @inject(TYPES.Managers.Scrape) private readonly scrapeManager: ScrapeManager
+    @inject(TYPES.Managers.Scrape)
+    private readonly observeManager: ObserveManager
   ) {}
 
   public async execute(
@@ -31,7 +32,7 @@ export default class implements Command {
   ): Promise<void> {
     const name = interaction.options.getString('name')!;
 
-    const commandResult = this.scrapeManager.deleteObserve(
+    const commandResult = await this.observeManager.deleteObserve(
       interaction.user.id,
       name
     );
@@ -45,14 +46,12 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    let observers = this.scrapeManager.observers.filter(
-      (observe) => observe.userId == interaction.user.id
-    );
+    var observes = await this.observeManager.getObserves(interaction.user.id);
 
     const userText = interaction.options.getFocused();
 
     if (userText.trim().length > 0) {
-      observers = observers.filter((observe) =>
+      observes = observes.filter((observe) =>
         observe.name
           .toLocaleLowerCase()
           .trim()
@@ -61,7 +60,7 @@ export default class implements Command {
     }
 
     await interaction.respond(
-      observers.map((observe) => ({ name: observe.name, value: observe.name }))
+      observes.map((observe) => ({ name: observe.name, value: observe.name }))
     );
   }
 }

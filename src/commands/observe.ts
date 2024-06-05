@@ -1,9 +1,9 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { ChatInputCommandInteraction } from 'discord.js';
 import { inject, injectable } from 'inversify';
-import ScrapeManager from '../managers/scrape';
+import ObserveManager from '../managers/observe';
 import { TYPES } from '../types';
-import { Observe } from '../types/models/observe';
+import { Observe, ScrapeIntervalType } from '../types/models/observe';
 import {
   buildCommandResultEmbed,
   buildObserveEmbed,
@@ -45,6 +45,23 @@ export default class implements Command {
     )
     .addStringOption((option) =>
       option
+        .setName('scrape-interval')
+        .setDescription(
+          'Set the interval the bot should scrape your observe | Hourly is the default'
+        )
+        .setChoices(
+          Object.keys(ScrapeIntervalType)
+            .filter((item) => {
+              return isNaN(Number(item));
+            })
+            .map((type) => {
+              return { name: type, value: type };
+            })
+        )
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
         .setName('dom-element-property')
         .setDescription(
           'By default, the bot will check the `innerText`, can also be href, data, value etc.'
@@ -52,7 +69,8 @@ export default class implements Command {
     );
 
   constructor(
-    @inject(TYPES.Managers.Scrape) private readonly scrapeManager: ScrapeManager
+    @inject(TYPES.Managers.Scrape)
+    private readonly observeManager: ObserveManager
   ) {}
 
   public async execute(
@@ -66,19 +84,22 @@ export default class implements Command {
       interaction.options.getString('url')!,
       interaction.options.getString('css-selector')!,
       interaction.options.getString('current-text')!,
+      interaction.options.getString('scrape-interval'),
       interaction.options.getString('dom-element-property')
     );
 
     if (observe instanceof Observe) {
-      const result = await this.scrapeManager.addObserve(observe);
+      interaction.deferReply({ ephemeral: true });
+
+      const result = await this.observeManager.addObserve(observe);
 
       if (result.successful) {
-        await interaction.reply({
+        await interaction.followUp({
           embeds: [buildObserveEmbed(observe)],
           ephemeral: true,
         });
       } else {
-        await interaction.reply({
+        await interaction.followUp({
           embeds: [
             buildCommandResultEmbed({
               successful: false,

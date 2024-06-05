@@ -4,9 +4,9 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
-import ScrapeManager from '../managers/scrape';
+import ObserveManager from '../managers/observe';
 import { TYPES } from '../types';
-import { Observe } from '../types/models/observe';
+import { Observe, ScrapeIntervalType } from '../types/models/observe';
 import { buildCommandResultEmbed } from '../utils/build-embed';
 import Command from './command';
 
@@ -54,6 +54,23 @@ export default class implements Command {
     )
     .addStringOption((option) =>
       option
+        .setName('scrape-interval')
+        .setDescription(
+          'Set the interval the bot should scrape your observe | Hourly is the default'
+        )
+        .setChoices(
+          Object.keys(ScrapeIntervalType)
+            .filter((item) => {
+              return isNaN(Number(item));
+            })
+            .map((type) => {
+              return { name: type, value: type };
+            })
+        )
+        .setRequired(true)
+    )
+    .addStringOption((option) =>
+      option
         .setName('dom-element-property')
         .setDescription(
           'By default, the bot will check the `innerText`, can also be href, data, value etc.'
@@ -61,35 +78,29 @@ export default class implements Command {
     );
 
   constructor(
-    @inject(TYPES.Managers.Scrape) private readonly scrapeManager: ScrapeManager
+    @inject(TYPES.Managers.Scrape)
+    private readonly observeManager: ObserveManager
   ) {}
 
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
     const currentName = interaction.options.getString('current-name')!;
-    const name = interaction.options.getString('name')!;
-    const url = interaction.options.getString('url')!;
-    const cssSelector = interaction.options.getString('css-selector')!;
-    const currentText = interaction.options.getString('current-text')!;
-    const domElementProperty = interaction.options.getString(
-      'dom-element-property',
-      false
-    );
 
     const observe = Observe.create(
       interaction.user.id,
       Date.now(),
       Date.now(),
-      name,
-      url,
-      cssSelector,
-      currentText,
-      domElementProperty
+      interaction.options.getString('name')!,
+      interaction.options.getString('url')!,
+      interaction.options.getString('css-selector')!,
+      interaction.options.getString('current-text')!,
+      interaction.options.getString('scrape-interval'),
+      interaction.options.getString('dom-element-property')
     );
 
     if (observe instanceof Observe) {
-      const commandResult = this.scrapeManager.editObserve(
+      const commandResult = await this.observeManager.editObserve(
         currentName,
         observe
       );
@@ -128,82 +139,56 @@ export default class implements Command {
     interaction: AutocompleteInteraction
   ): Promise<void> {
     var options: string[] = [];
+    const observes = await this.observeManager.getObserves(interaction.user.id);
     const currentName = interaction.options.getString('current-name');
     const focusedOption = interaction.options.getFocused(true);
 
+    var observe;
+    if (currentName != null) {
+      observe = observes.find((observe) => observe.name == currentName);
+    }
+
     switch (focusedOption.name) {
       case 'current-name': {
-        options = this.scrapeManager.observers
-          .filter((observe) => observe.userId == interaction.user.id)
-          .map((observe) => observe.name);
+        options = observes.map((observe) => observe.name);
         break;
       }
       case 'name': {
-        if (currentName != null) {
-          const observe = this.scrapeManager.observers.find(
-            (observe) =>
-              observe.userId == interaction.user.id &&
-              observe.name == currentName
-          );
-          if (!!observe) {
-            options = [observe!.name];
-          }
+        if (!!observe) {
+          options = [observe.name];
         }
+
         break;
       }
       case 'url': {
-        if (currentName != null) {
-          const observe = this.scrapeManager.observers.find(
-            (observe) =>
-              observe.userId == interaction.user.id &&
-              observe.name == currentName
-          );
-          if (!!observe) {
-            options = [observe!.url];
-          }
+        if (!!observe) {
+          options = [observe.url];
         }
+
         break;
       }
       case 'css-selector': {
-        if (currentName != null) {
-          const observe = this.scrapeManager.observers.find(
-            (observe) =>
-              observe.userId == interaction.user.id &&
-              observe.name == currentName
-          );
-          if (!!observe) {
-            options = [observe!.cssSelector];
-          }
+        if (!!observe) {
+          options = [observe.cssSelector];
         }
+
         break;
       }
       case 'current-text': {
-        if (currentName != null) {
-          const observe = this.scrapeManager.observers.find(
-            (observe) =>
-              observe.userId == interaction.user.id &&
-              observe.name == currentName
-          );
-          if (!!observe) {
-            options = [observe!.currentText];
-          }
+        if (!!observe) {
+          options = [observe.currentText];
         }
+
         break;
       }
       case 'dom-element-property': {
-        if (currentName != null) {
-          const observe = this.scrapeManager.observers.find(
-            (observe) =>
-              observe.userId == interaction.user.id &&
-              observe.name == currentName
-          );
-          if (!!observe) {
-            options =
-              observe!.domElementProperty != null
-                ? [observe!.domElementProperty!]
-                : [];
-          }
+        if (!!observe) {
+          options =
+            observe!.domElementProperty != null
+              ? [observe.domElementProperty!]
+              : [];
         }
+
         break;
       }
     }

@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Observe {
+  userId                String  
+  createdAtMS           BigInt
+  updatedAtMS           BigInt
+  name                  String
+  url                   String
+  cssSelector           String
+  currentText           String
+  domElementProperty    String?
+  scrapeIntervalType    String
+  lastScrapeAtMS        BigInt
+
+  @@unique([userId, name])
+}

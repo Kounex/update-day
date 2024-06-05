@@ -10,18 +10,18 @@ export enum ScrapeResultType {
 export class ScrapeResult {
   constructor(
     public readonly observe: Observe,
-    private readonly _type: ScrapeResultType
+    public readonly type: ScrapeResultType
   ) {}
 
   public get successful(): boolean {
     return (
-      this._type == ScrapeResultType.Change ||
-      this._type == ScrapeResultType.NoChange
+      this.type == ScrapeResultType.Change ||
+      this.type == ScrapeResultType.NoChange
     );
   }
 
   public get message(): string {
-    switch (this._type) {
+    switch (this.type) {
       case ScrapeResultType.Change: {
         return 'Change detected, user should be notified!';
       }

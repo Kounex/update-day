@@ -6,7 +6,8 @@ import Config from './config';
 import { TYPES } from './types';
 
 // Managers
-import ScrapeManager from './managers/scrape';
+import ObserveManager from './managers/observe';
+import SchedulerManager from './managers/scheduler';
 
 // Services
 
@@ -31,8 +32,12 @@ container.bind<Client>(TYPES.Client).toConstantValue(new Client({ intents }));
 
 // Managers
 container
-  .bind<ScrapeManager>(TYPES.Managers.Scrape)
-  .to(ScrapeManager)
+  .bind<ObserveManager>(TYPES.Managers.Scrape)
+  .to(ObserveManager)
+  .inSingletonScope();
+container
+  .bind<SchedulerManager>(TYPES.Managers.Scheduler)
+  .to(SchedulerManager)
   .inSingletonScope();
 
 // Services
