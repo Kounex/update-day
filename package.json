@@ -1,6 +1,6 @@
 {
   "name": "update-day",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "description": "A Discord bot to notify you about website changes",
   "repository": "git@github.com:Kounex/update-day.git",
   "author": "Kounex <r.schramowski@googlemail.com>",
@@ -111,6 +111,7 @@
     "p-limit": "^5.0.0",
     "p-queue": "^8.0.1",
     "p-retry": "6.2.0",
+    "pad": "^3.2.0",
     "pagination.djs": "^4.0.15",
     "parse-duration": "1.1.0",
     "patch-package": "^8.0.0",

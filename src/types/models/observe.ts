@@ -23,6 +23,28 @@ export class ScrapeInterval {
     });
   }
 
+  public static enumText(type: ScrapeIntervalType | string): string {
+    const enumType =
+      typeof type == 'string' ? ScrapeInterval.toEnumType(type) : type;
+    switch (enumType) {
+      case ScrapeIntervalType.OneMinute: {
+        return 'Every Minute';
+      }
+      case ScrapeIntervalType.FiveMinutes: {
+        return 'Every 5 Minutes';
+      }
+      case ScrapeIntervalType.FifteenMinutes: {
+        return 'Every 15 Minutes';
+      }
+      case ScrapeIntervalType.Hourly: {
+        return 'Hourly';
+      }
+      case ScrapeIntervalType.Daily: {
+        return 'Daily';
+      }
+    }
+  }
+
   public get durationMS(): number {
     switch (this.type) {
       case ScrapeIntervalType.OneMinute: {
@@ -54,8 +76,12 @@ export class Observe {
     public readonly cssSelector: string,
     public readonly currentText: string,
     public readonly domElementProperty: string | null,
-    public readonly scrapeInterval: ScrapeInterval,
-    public readonly lastScrapeAtMS: bigint
+    public readonly scrapeInterval: ScrapeInterval = new ScrapeInterval(
+      ScrapeIntervalType.Hourly
+    ),
+    public readonly keepActive: boolean = false,
+    public readonly active: boolean = true,
+    public readonly lastScrapeAtMS: bigint = BigInt(0)
   ) {}
 
   public static create(
@@ -68,7 +94,9 @@ export class Observe {
     currentText: string,
     scrapeInterval: string | ScrapeInterval | null,
     domElementProperty?: string | null,
-    lastScrapeAtMS?: number | bigint | null
+    keepActive: boolean = false,
+    active: boolean = true,
+    lastScrapeAtMS: number | bigint = BigInt(0)
   ): Observe | Error {
     if (!this.isValidURL(url.trim())) {
       return {
@@ -100,7 +128,9 @@ export class Observe {
               ? ScrapeInterval.toEnumType(scrapeInterval)
               : ScrapeIntervalType.Hourly
           ),
-      BigInt(lastScrapeAtMS ?? 0)
+      keepActive,
+      active,
+      BigInt(lastScrapeAtMS)
     );
   }
 
@@ -114,6 +144,8 @@ export class Observe {
     currentText: string;
     domElementProperty: string | null;
     scrapeIntervalType: string;
+    keepActive: boolean;
+    active: boolean;
     lastScrapeAtMS: bigint;
   }) {
     return new Observe(
@@ -126,6 +158,8 @@ export class Observe {
       observe.currentText,
       observe.domElementProperty,
       new ScrapeInterval(ScrapeInterval.toEnumType(observe.scrapeIntervalType)),
+      observe.keepActive,
+      observe.active,
       observe.lastScrapeAtMS
     );
   }
@@ -142,6 +176,8 @@ export class Observe {
         currentText: this.currentText,
         domElementProperty: this.domElementProperty,
         scrapeIntervalType: ScrapeIntervalType[this.scrapeInterval.type],
+        keepActive: this.keepActive,
+        active: this.active,
         lastScrapeAtMS: this.lastScrapeAtMS,
       },
     };

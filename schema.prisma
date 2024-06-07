@@ -10,14 +10,16 @@ datasource db {
 model Observe {
   userId                String  
   createdAtMS           BigInt
-  updatedAtMS           BigInt
+  updatedAtMS           BigInt    @default(0)
   name                  String
   url                   String
   cssSelector           String
   currentText           String
   domElementProperty    String?
-  scrapeIntervalType    String
-  lastScrapeAtMS        BigInt
+  scrapeIntervalType    String    @default("Hourly")
+  keepActive            Boolean   @default(false)
+  active                Boolean   @default(true)
+  lastScrapeAtMS        BigInt    @default(0)
 
   @@unique([userId, name])
 }

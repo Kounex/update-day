@@ -2,6 +2,7 @@ import { injectable } from 'inversify/lib/annotation/injectable';
 import puppeteer, { Browser } from 'puppeteer';
 import { ScrapeResult, ScrapeResultType } from '../types/classes/scrape-result';
 import { Observe } from '../types/models/observe';
+import { prisma } from '../utils/db';
 
 @injectable()
 export default class ScrapeService {
@@ -26,27 +27,23 @@ export default class ScrapeService {
         throw Error;
       }
     } catch (_) {
-      return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
-    }
-
-    var text;
-    try {
-      text = await element.evaluate((el) => el.textContent);
-
-      if (
-        !!initial &&
-        (text == null ||
-          text == undefined ||
-          !text
-            .toLocaleLowerCase()
-            .trim()
-            .includes(observe.currentText.toLocaleLowerCase().trim()))
-      ) {
-        throw Error;
+      await page.close();
+      if (!!initial) {
+        return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
       }
-    } catch (_) {
-      return new ScrapeResult(observe, ScrapeResultType.TextNotFound);
+      return this.handleFoundChange(observe);
     }
+
+    const domElementProperty = observe.domElementProperty;
+    const text = await element.evaluate(
+      (el, domElementProperty) =>
+        domElementProperty == null
+          ? el.textContent
+          : el.getAttribute(domElementProperty),
+      domElementProperty
+    );
+
+    await page.close();
 
     if (
       text == null ||
@@ -56,9 +53,27 @@ export default class ScrapeService {
         .trim()
         .includes(observe.currentText.toLocaleLowerCase().trim())
     ) {
-      return new ScrapeResult(observe, ScrapeResultType.Change);
+      if (!!initial) {
+        return new ScrapeResult(observe, ScrapeResultType.TextNotFound);
+      }
+
+      return this.handleFoundChange(observe);
     }
 
     return new ScrapeResult(observe, ScrapeResultType.NoChange);
+  }
+
+  private async handleFoundChange(observe: Observe): Promise<ScrapeResult> {
+    await prisma.observe.updateMany({
+      where: {
+        userId: observe.userId,
+        name: observe.name,
+      },
+      data: {
+        active: observe.keepActive,
+      },
+    });
+
+    return new ScrapeResult(observe, ScrapeResultType.Change);
   }
 }

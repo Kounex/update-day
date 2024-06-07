@@ -6,8 +6,11 @@ import {
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe';
 import { TYPES } from '../types';
-import { Observe, ScrapeIntervalType } from '../types/models/observe';
-import { buildCommandResultEmbed } from '../utils/build-embed';
+import { Observe, ScrapeInterval } from '../types/models/observe';
+import {
+  buildCommandResultEmbed,
+  buildObserveEmbed,
+} from '../utils/build-embed';
 import Command from './command';
 
 @injectable()
@@ -59,13 +62,12 @@ export default class implements Command {
           'Set the interval the bot should scrape your observe | Hourly is the default'
         )
         .setChoices(
-          Object.keys(ScrapeIntervalType)
-            .filter((item) => {
-              return isNaN(Number(item));
-            })
-            .map((type) => {
-              return { name: type, value: type };
-            })
+          ScrapeInterval.enumValues.map((type) => {
+            return {
+              name: ScrapeInterval.enumText(type),
+              value: type,
+            };
+          })
         )
         .setRequired(true)
     )
@@ -75,10 +77,21 @@ export default class implements Command {
         .setDescription(
           'By default, the bot will check the `innerText`, can also be href, data, value etc.'
         )
+    )
+    .addStringOption((option) =>
+      option
+        .setName('keep-active')
+        .setDescription(
+          'If you want to deactivate the observe once it found a change, on by default'
+        )
+        .setChoices([
+          { name: 'Yes', value: 'true' },
+          { name: 'No', value: 'false' },
+        ])
     );
 
   constructor(
-    @inject(TYPES.Managers.Scrape)
+    @inject(TYPES.Managers.Observe)
     private readonly observeManager: ObserveManager
   ) {}
 
@@ -96,7 +109,10 @@ export default class implements Command {
       interaction.options.getString('css-selector')!,
       interaction.options.getString('current-text')!,
       interaction.options.getString('scrape-interval'),
-      interaction.options.getString('dom-element-property')
+      interaction.options.getString('dom-element-property'),
+      interaction.options.getString('keep-active') != null
+        ? Boolean(interaction.options.getString('keep-active'))
+        : false
     );
 
     if (observe instanceof Observe) {
@@ -105,10 +121,17 @@ export default class implements Command {
         observe
       );
 
-      await interaction.reply({
-        embeds: [buildCommandResultEmbed(commandResult)],
-        ephemeral: true,
-      });
+      if (commandResult.successful) {
+        await interaction.reply({
+          embeds: [buildObserveEmbed(observe)],
+          ephemeral: true,
+        });
+      } else {
+        await interaction.reply({
+          embeds: [buildCommandResultEmbed(commandResult)],
+          ephemeral: true,
+        });
+      }
     } else {
       await interaction.reply({
         embeds: [
@@ -120,19 +143,6 @@ export default class implements Command {
         ephemeral: true,
       });
     }
-
-    // if (commandResult.successful) {
-    //   await interaction.reply({
-    //     content: '',
-    //     embeds: [buildObserveEmbed(observe)],
-    //     ephemeral: true,
-    //   });
-    // } else {
-    //   await interaction.reply({
-    //     embeds: [buildCommandResultEmbed(commandResult)],
-    //     ephemeral: true,
-    //   });
-    // }
   }
 
   public async handleAutocompleteInteraction(
@@ -186,6 +196,16 @@ export default class implements Command {
           options =
             observe!.domElementProperty != null
               ? [observe.domElementProperty!]
+              : [];
+        }
+
+        break;
+      }
+      case 'keep-active': {
+        if (!!observe) {
+          options =
+            observe!.keepActive != null
+              ? [observe.keepActive! ? 'Yes' : 'No']
               : [];
         }
 

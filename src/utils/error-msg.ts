@@ -5,7 +5,7 @@ export default (error?: string | Error): string => {
     if (typeof error === 'string') {
       str = `🚫 ope: ${error}`;
     } else if (error instanceof Error) {
-      str = `🚫 ope: ${error.name} | ${error.message}`;
+      str = `🚫 ope: ${error.name} | ${error.message} | ${error.cause}`;
     }
   }
 

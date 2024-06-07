@@ -10,13 +10,14 @@ import ObserveManager from './managers/observe';
 import SchedulerManager from './managers/scheduler';
 
 // Services
+import ScrapeService from './services/scrape';
 
 // Commands
 import Command from './commands/command';
 import Delete from './commands/delete';
 import Edit from './commands/edit';
+import List from './commands/list';
 import Observe from './commands/observe';
-import ScrapeService from './services/scrape';
 
 const container = new Container();
 
@@ -32,19 +33,19 @@ container.bind<Client>(TYPES.Client).toConstantValue(new Client({ intents }));
 
 // Managers
 container
-  .bind<ObserveManager>(TYPES.Managers.Scrape)
-  .to(ObserveManager)
-  .inSingletonScope();
-container
   .bind<SchedulerManager>(TYPES.Managers.Scheduler)
   .to(SchedulerManager)
+  .inSingletonScope();
+container
+  .bind<ObserveManager>(TYPES.Managers.Observe)
+  .to(ObserveManager)
   .inSingletonScope();
 
 // Services
 container.bind(TYPES.Services.Scrape).to(ScrapeService).inSingletonScope();
 
 // Commands
-[Observe, Edit, Delete].forEach((command) => {
+[Delete, Edit, List, Observe].forEach((command) => {
   container.bind<Command>(TYPES.Command).to(command).inSingletonScope();
 });
 

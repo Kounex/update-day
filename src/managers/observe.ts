@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import ScrapeService from '../services/scrape';
 import { TYPES } from '../types';
 import { CommandResult } from '../types/interfaces/command-result';
-import { Observe, ScrapeIntervalType } from '../types/models/observe';
+import { Observe } from '../types/models/observe';
 import { prisma } from '../utils/db';
 
 @injectable()
@@ -87,7 +87,10 @@ export default class {
       editedObserve.cssSelector,
       editedObserve.currentText,
       editedObserve.scrapeInterval,
-      editedObserve.domElementProperty
+      editedObserve.domElementProperty,
+      editedObserve.keepActive,
+      editedObserve.active,
+      editedObserve.lastScrapeAtMS
     );
 
     if (newObserve instanceof Observe) {
@@ -99,15 +102,7 @@ export default class {
           userId: editedObserve.userId,
           name: name,
         },
-        data: {
-          name: editedObserve.name,
-          updatedAtMS: BigInt(Date.now()),
-          url: editedObserve.url,
-          cssSelector: editedObserve.cssSelector,
-          domElementProperty: editedObserve.domElementProperty,
-          scrapeIntervalType:
-            ScrapeIntervalType[editedObserve.scrapeInterval.type],
-        },
+        data: editedObserve.toPrisma()['data'],
       });
 
       if (count < 1) {
@@ -143,12 +138,13 @@ export default class {
     if (count < 1) {
       return {
         successful: false,
-        message: `Did not find a observe to delete with the name ${name}. Make sure it exists with \`/list\``,
+        message: `Did not find a observe to delete with the name ${name}. Make sure it exists with \`/list\`.`,
       };
     }
 
     return {
       successful: true,
+      message: `Your Observe ${name} has been successfully deleted.`,
     };
   }
 }

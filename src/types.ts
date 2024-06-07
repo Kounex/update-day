@@ -4,8 +4,8 @@ export const TYPES = {
   Client: Symbol('Client'),
   Config: Symbol('Config'),
   Managers: {
-    Scrape: Symbol('ObserveManager'),
-    Scheduler: Symbol('SchedulerManager'),
+    Observe: Symbol('Observe'),
+    Scheduler: Symbol('Scheduler'),
   },
   Services: {
     Scrape: Symbol('Scrape'),

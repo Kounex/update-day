@@ -14,8 +14,8 @@ const CONFIG_MAP = {
   DISCORD_TOKEN: process.env.DISCORD_TOKEN,
   DATA_DIR,
   REGISTER_COMMANDS_ON_BOT: process.env.REGISTER_COMMANDS_ON_BOT === 'true',
-  BOT_ACTIVITY: process.env.BOT_ACTIVITY ?? 'scraping',
-  BOT_ACTIVITY_TYPE: process.env.BOT_ACTIVITY_TYPE ?? 'Observing 👀',
+  BOT_ACTIVITY: process.env.BOT_ACTIVITY ?? 'Observing 👀',
+  BOT_ACTIVITY_TYPE: process.env.BOT_ACTIVITY_TYPE ?? 'Custom',
   BOT_STATUS: process.env.BOT_STATUS ?? 'online',
 } as const;
 
@@ -25,7 +25,7 @@ export default class Config {
   readonly DATA_DIR!: string;
   readonly REGISTER_COMMANDS_ON_BOT!: boolean;
   readonly BOT_ACTIVITY!: string;
-  readonly BOT_ACTIVITY_TYPE!: Exclude<ActivityType, ActivityType.Custom>;
+  readonly BOT_ACTIVITY_TYPE!: ActivityType;
   readonly BOT_STATUS!: PresenceStatusData;
 
   constructor() {

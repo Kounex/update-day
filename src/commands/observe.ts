@@ -3,7 +3,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe';
 import { TYPES } from '../types';
-import { Observe, ScrapeIntervalType } from '../types/models/observe';
+import { Observe, ScrapeInterval } from '../types/models/observe';
 import {
   buildCommandResultEmbed,
   buildObserveEmbed,
@@ -50,13 +50,12 @@ export default class implements Command {
           'Set the interval the bot should scrape your observe | Hourly is the default'
         )
         .setChoices(
-          Object.keys(ScrapeIntervalType)
-            .filter((item) => {
-              return isNaN(Number(item));
-            })
-            .map((type) => {
-              return { name: type, value: type };
-            })
+          ScrapeInterval.enumValues.map((type) => {
+            return {
+              name: ScrapeInterval.enumText(type),
+              value: type,
+            };
+          })
         )
         .setRequired(true)
     )
@@ -66,10 +65,21 @@ export default class implements Command {
         .setDescription(
           'By default, the bot will check the `innerText`, can also be href, data, value etc.'
         )
+    )
+    .addStringOption((option) =>
+      option
+        .setName('keep-active')
+        .setDescription(
+          'If you want to deactivate the observe once it found a change, on by default'
+        )
+        .setChoices([
+          { name: 'Yes', value: 'true' },
+          { name: 'No', value: 'false' },
+        ])
     );
 
   constructor(
-    @inject(TYPES.Managers.Scrape)
+    @inject(TYPES.Managers.Observe)
     private readonly observeManager: ObserveManager
   ) {}
 
@@ -79,13 +89,16 @@ export default class implements Command {
     const observe = Observe.create(
       interaction.user.id,
       Date.now(),
-      Date.now(),
+      0,
       interaction.options.getString('name')!,
       interaction.options.getString('url')!,
       interaction.options.getString('css-selector')!,
       interaction.options.getString('current-text')!,
       interaction.options.getString('scrape-interval'),
-      interaction.options.getString('dom-element-property')
+      interaction.options.getString('dom-element-property'),
+      interaction.options.getString('keep-active') != null
+        ? Boolean(interaction.options.getString('keep-active'))
+        : false
     );
 
     if (observe instanceof Observe) {

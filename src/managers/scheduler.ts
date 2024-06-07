@@ -1,44 +1,67 @@
-import { log } from 'console';
 import { Client } from 'discord.js';
-import { inject } from 'inversify';
-import { injectable } from 'inversify/lib/annotation/injectable';
+import { inject, injectable } from 'inversify';
 import ScrapeService from '../services/scrape';
 import { TYPES } from '../types';
+import { ScrapeResultType } from '../types/classes/scrape-result';
+import { Observe } from '../types/models/observe';
 import { buildObserveEmbed } from '../utils/build-embed';
-import ObserveManager from './observe';
+import { prisma } from '../utils/db';
+import ObserverManager from './observe';
 
 @injectable()
 export default class {
+  private cachedObserves: Observe[] = [];
+  private observing: boolean = false;
+
   constructor(
-    @inject(TYPES.Managers.Scrape)
-    private readonly observeManager: ObserveManager,
-    @inject(TYPES.Services.Scrape)
-    private readonly scrapeService: ScrapeService,
-    @inject(TYPES.Client) private readonly client: Client
-  ) {
-    setInterval(this.checkFunctions, 5000);
+    @inject(TYPES.Client) private readonly client: Client,
+    @inject(TYPES.Managers.Observe)
+    private readonly observeManager: ObserverManager,
+    @inject(TYPES.Services.Scrape) private readonly scrapeService: ScrapeService
+  ) {}
+
+  public init(): void {
+    // To enable the checkObserves function to access this, we need to bind
+    // setInterval(this.refreshCacheObserves.bind(this), 300_000);
+    setInterval(this.checkObserves.bind(this), 15_000);
   }
 
-  private async checkFunctions(): Promise<void> {
+  private async refreshCacheObserves(): Promise<void> {
+    if (!this.observing) {
+      this.cachedObserves = await this.observeManager.getObserves();
+    }
+  }
+
+  private async checkObserves(): Promise<void> {
+    this.observing = true;
     for (const observe of await this.observeManager.getObserves()) {
       if (
-        // observe.lastScrapeMS + observe.scrapeInterval.durationMS <
-        // Date.now()
-        true
+        Number(observe.lastScrapeAtMS) + observe.scrapeInterval.durationMS <
+        Date.now()
       ) {
-        // this.scrapeService.observe(observe).then((scrapeResult) => {
-        //   if (scrapeResult.type == ScrapeResultType.Change) {
-        log('TEST');
-        this.client.users.fetch(observe.userId).then((user) =>
-          user.send({
-            content:
-              'A change has been found for your following observe - check quickly!',
-            embeds: [buildObserveEmbed(observe)],
-          })
-        );
-        //   }
-        // });
+        this.scrapeService.observe(observe).then((scrapeResult) => {
+          prisma.observe.updateMany({
+            where: {
+              userId: observe.userId,
+              name: observe.name,
+            },
+            data: {
+              lastScrapeAtMS: Date.now(),
+            },
+          });
+
+          if (scrapeResult.type == ScrapeResultType.Change) {
+            this.client.users.fetch(observe.userId).then((user) =>
+              user.send({
+                content:
+                  'A change has been found for your following observe - check quickly!',
+                embeds: [buildObserveEmbed(observe)],
+              })
+            );
+          }
+        });
       }
     }
+    this.observing = false;
   }
 }

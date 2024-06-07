@@ -23,7 +23,7 @@ export default class implements Command {
     );
 
   constructor(
-    @inject(TYPES.Managers.Scrape)
+    @inject(TYPES.Managers.Observe)
     private readonly observeManager: ObserveManager
   ) {}
 

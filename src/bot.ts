@@ -152,6 +152,7 @@ export default class {
         activities: [
           {
             name: this.config.BOT_ACTIVITY,
+            state: this.config.BOT_ACTIVITY,
             type: this.config.BOT_ACTIVITY_TYPE,
           },
         ],
