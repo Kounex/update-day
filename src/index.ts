@@ -1,9 +1,9 @@
 import { makeDirectory } from 'make-dir';
-import Bot from './bot';
-import Config from './config';
-import container from './inversify.config';
-import SchedulerManager from './managers/scheduler';
-import { TYPES } from './types';
+import Bot from './bot.js';
+import Config from './config.js';
+import container from './inversify.config.js';
+import SchedulerManager from './managers/scheduler.js';
+import { TYPES } from './types.js';
 
 const bot = container.get<Bot>(TYPES.Bot);
 

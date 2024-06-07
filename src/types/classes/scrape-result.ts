@@ -1,4 +1,4 @@
-import { Observe } from '../models/observe';
+import { Observe } from '../models/observe.js';
 
 export enum ScrapeResultType {
   Change,

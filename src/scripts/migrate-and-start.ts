@@ -7,12 +7,12 @@ import Prisma from '@prisma/client';
 import { execa, ExecaError } from 'execa';
 import { promises as fs } from 'fs';
 import ora from 'ora';
-import { DATA_DIR } from '../config';
-import { startBot } from '../index';
+import { DATA_DIR } from '../config.js';
+import { startBot } from '../index.js';
 import createDatabaseUrl, {
   createDatabasePath,
-} from '../utils/create-database-url';
-import logBanner from '../utils/log-banner';
+} from '../utils/create-database-url.js';
+import logBanner from '../utils/log-banner.js';
 
 const client = new Prisma.PrismaClient();
 

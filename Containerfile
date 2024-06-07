@@ -1,4 +1,4 @@
-FROM node:18.7.0-slim AS base
+FROM node:18-slim AS base
 
 # openssl will be a required package if base is updated to 18.16+ due to node:*-slim base distro change
 # https://github.com/prisma/prisma/issues/19729#issuecomment-1591270599
@@ -29,7 +29,6 @@ FROM dependencies AS builder
 
 COPY . .
 
-RUN tsc build
 RUN yarn prisma generate
 RUN yarn build
 
@@ -55,4 +54,4 @@ ENV NODE_ENV production
 # Change user to non root
 USER 1000
 
-CMD ["tini", "--", "node", "--enable-source-maps", "dist/scripts/start.js"]
+CMD ["node", "--enable-source-maps", "dist/scripts/start.js"]

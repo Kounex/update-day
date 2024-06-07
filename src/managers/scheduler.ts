@@ -1,12 +1,12 @@
 import { Client } from 'discord.js';
 import { inject, injectable } from 'inversify';
-import ScrapeService from '../services/scrape';
-import { TYPES } from '../types';
-import { ScrapeResultType } from '../types/classes/scrape-result';
-import { Observe } from '../types/models/observe';
-import { buildObserveEmbed } from '../utils/build-embed';
-import { prisma } from '../utils/db';
-import ObserverManager from './observe';
+import ScrapeService from '../services/scrape.js';
+import { TYPES } from '../types.js';
+import { ScrapeResultType } from '../types/classes/scrape-result.js';
+import { Observe } from '../types/models/observe.js';
+import { buildObserveEmbed } from '../utils/build-embed.js';
+import { prisma } from '../utils/db.js';
+import ObserverManager from './observe.js';
 
 @injectable()
 export default class {

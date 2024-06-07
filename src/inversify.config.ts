@@ -1,23 +1,23 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import { Container } from 'inversify';
 import 'reflect-metadata';
-import Bot from './bot';
-import Config from './config';
-import { TYPES } from './types';
+import Bot from './bot.js';
+import Config from './config.js';
+import { TYPES } from './types.js';
 
 // Managers
-import ObserveManager from './managers/observe';
-import SchedulerManager from './managers/scheduler';
+import ObserveManager from './managers/observe.js';
+import SchedulerManager from './managers/scheduler.js';
 
 // Services
-import ScrapeService from './services/scrape';
+import ScrapeService from './services/scrape.js';
 
 // Commands
-import Command from './commands/command';
-import Delete from './commands/delete';
-import Edit from './commands/edit';
-import List from './commands/list';
-import Observe from './commands/observe';
+import Command from './commands/command.js';
+import Delete from './commands/delete.js';
+import Edit from './commands/edit.js';
+import List from './commands/list.js';
+import Observe from './commands/observe.js';
 
 const container = new Container();
 

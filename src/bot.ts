@@ -1,17 +1,16 @@
 import { REST } from '@discordjs/rest';
-import { generateDependencyReport } from '@discordjs/voice';
 import { Routes } from 'discord-api-types/v10';
 import { Client, Collection } from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ora from 'ora';
-import Command from './commands/command';
-import Config from './config';
-import handleGuildCreate from './events/guild-create';
-import container from './inversify.config';
-import { TYPES } from './types';
-import debug from './utils/debug';
-import errorMsg from './utils/error-msg';
-import registerCommandsOnGuild from './utils/register-commands-on-guild';
+import Command from './commands/command.js';
+import Config from './config.js';
+import handleGuildCreate from './events/guild-create.js';
+import container from './inversify.config.js';
+import { TYPES } from './types.js';
+import debug from './utils/debug.js';
+import errorMsg from './utils/error-msg.js';
+import registerCommandsOnGuild from './utils/register-commands-on-guild.js';
 
 @injectable()
 export default class {
@@ -115,8 +114,6 @@ export default class {
     const spinner = ora('📡 connecting to Discord...').start();
 
     this.client.once('ready', async () => {
-      debug(generateDependencyReport());
-
       // Update commands
       const rest = new REST({ version: '10' }).setToken(
         this.config.DISCORD_TOKEN

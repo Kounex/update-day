@@ -1,6 +1,6 @@
 import { EmbedBuilder } from 'discord.js';
-import { CommandResult } from '../types/interfaces/command-result';
-import { Observe, ScrapeInterval } from '../types/models/observe';
+import { CommandResult } from '../types/interfaces/command-result.js';
+import { Observe, ScrapeInterval } from '../types/models/observe.js';
 
 export const buildCommandResultEmbed = (
   commandResult: CommandResult

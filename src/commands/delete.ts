@@ -4,10 +4,10 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
-import ObserveManager from '../managers/observe';
-import { TYPES } from '../types';
-import { buildCommandResultEmbed } from '../utils/build-embed';
-import Command from './command';
+import ObserveManager from '../managers/observe.js';
+import { TYPES } from '../types.js';
+import { buildCommandResultEmbed } from '../utils/build-embed.js';
+import Command from './command.js';
 
 @injectable()
 export default class implements Command {

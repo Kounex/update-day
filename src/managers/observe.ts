@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
-import ScrapeService from '../services/scrape';
-import { TYPES } from '../types';
-import { CommandResult } from '../types/interfaces/command-result';
-import { Observe } from '../types/models/observe';
-import { prisma } from '../utils/db';
+import ScrapeService from '../services/scrape.js';
+import { TYPES } from '../types.js';
+import { CommandResult } from '../types/interfaces/command-result.js';
+import { Observe } from '../types/models/observe.js';
+import { prisma } from '../utils/db.js';
 
 @injectable()
 export default class {

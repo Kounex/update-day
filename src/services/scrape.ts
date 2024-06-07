@@ -1,8 +1,11 @@
 import { injectable } from 'inversify/lib/annotation/injectable';
 import puppeteer, { Browser } from 'puppeteer';
-import { ScrapeResult, ScrapeResultType } from '../types/classes/scrape-result';
-import { Observe } from '../types/models/observe';
-import { prisma } from '../utils/db';
+import {
+  ScrapeResult,
+  ScrapeResultType,
+} from '../types/classes/scrape-result.js';
+import { Observe } from '../types/models/observe.js';
+import { prisma } from '../utils/db.js';
 
 @injectable()
 export default class ScrapeService {

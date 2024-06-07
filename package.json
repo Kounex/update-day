@@ -9,7 +9,7 @@
   "types": "dts/types",
   "type": "module",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "files": [
     "src"
@@ -36,10 +36,11 @@
     "@types/debug": "^4.1.12",
     "@types/fs-capacitor": "^2.0.0",
     "@types/ms": "0.7.34",
-    "@types/node": "^20.12.13",
+    "@types/node": "^18.19.34",
     "@types/node-emoji": "^1.8.2",
     "@types/validator": "^13.11.10",
     "@types/ws": "8.5.10",
+    "@types/puppeteer": "^7.0.4",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
     "eslint": "^8.56.0",
@@ -83,9 +84,7 @@
   },
   "dependencies": {
     "@discordjs/builders": "1.8.1",
-    "@discordjs/opus": "^0.9.0",
     "@discordjs/rest": "2.3.0",
-    "@discordjs/voice": "0.17.0",
     "@prisma/client": "5.14.0",
     "@types/libsodium-wrappers": "^0.7.14",
     "array-shuffle": "^3.0.0",
@@ -98,7 +97,7 @@
     "dotenv": "^16.4.5",
     "execa": "^9.1.0",
     "fs-capacitor": "^8.0.0",
-    "got": "^14.3.0",
+    "got": "^12.6.1",
     "hasha": "^6.0.0",
     "inversify": "^6.0.2",
     "iso8601-duration": "^2.1.2",
@@ -120,8 +119,5 @@
     "read-pkg": "9.0.1",
     "reflect-metadata": "^0.2.2",
     "tsx": "4.11.0"
-  },
-  "resolutions": {
-    "@types/ws": "8.5.4"
   }
 }

@@ -1,10 +1,10 @@
 import { REST } from '@discordjs/rest';
 import { Client, Guild } from 'discord.js';
-import Command from '../commands/command';
-import Config from '../config';
-import container from '../inversify.config';
-import { TYPES } from '../types';
-import registerCommandsOnGuild from '../utils/register-commands-on-guild';
+import Command from '../commands/command.js';
+import Config from '../config.js';
+import container from '../inversify.config.js';
+import { TYPES } from '../types.js';
+import registerCommandsOnGuild from '../utils/register-commands-on-guild.js';
 
 export default async (guild: Guild): Promise<void> => {
   const config = container.get<Config>(TYPES.Config);
