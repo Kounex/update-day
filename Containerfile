@@ -35,7 +35,7 @@ RUN yarn prisma generate
 RUN yarn build
 
 # Only keep what's necessary to run
-FROM base AS runner
+FROM registry.access.redhat.com/ubi8/nodejs-18 AS runner
 
 WORKDIR /usr/app
 
@@ -52,5 +52,8 @@ ENV DATA_DIR /data
 ENV NODE_ENV production
 # ENV COMMIT_HASH $COMMIT_HASH
 # ENV BUILD_DATE $BUILD_DATE
+
+# Change user to non root
+USER 1000
 
 CMD ["tini", "--", "node", "--enable-source-maps", "dist/scripts/start.js"]

@@ -1,0 +1,70 @@
+name: Build&Push GHCR
+on:
+  push:
+    branches: [release]
+    paths-ignore:
+      - '**/README.md'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: update-day
+  IMAGE_DESCRIPTION: Discord bot to observe website changes and get notified
+  IMAGE_VENDOR: ${{ github.repository_owner }}
+
+jobs:
+  build-push-ghrc:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        run: |
+          VER=$(cat ./package.json | grep "version" | cut -f 2 -d ":" | cut -f 1 -d "+" | cut -f 1 -d , | xargs)
+          echo "APP_VERSION=$VER" >> $GITHUB_ENV
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_VENDOR }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
+            org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
+            org.opencontainers.image.vendor=${{ env.IMAGE_VENDOR }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ env.APP_VERSION }},priority=50
+            type=ref,event=branch
+            type=raw,value=latest
+            type=sha
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: Containerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.APP_VERSION }}
+          release_name: ${{ env.APP_VERSION }}

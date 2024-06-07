@@ -35,6 +35,11 @@ export default class Config {
         process.exit(1);
       }
 
+      if (key === 'BOT_ACTIVITY_TYPE') {
+        this[key] = ActivityType[value as string as keyof typeof ActivityType];
+        continue;
+      }
+
       if (typeof value === 'number') {
         this[key as ConditionalKeys<typeof CONFIG_MAP, number>] = value;
       } else if (typeof value === 'string') {
