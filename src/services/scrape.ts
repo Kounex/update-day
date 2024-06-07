@@ -1,4 +1,4 @@
-import { injectable } from 'inversify/lib/annotation/injectable';
+import { injectable } from 'inversify/lib/annotation/injectable.js';
 import puppeteer, { Browser } from 'puppeteer';
 import {
   ScrapeResult,
