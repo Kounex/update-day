@@ -87,6 +87,15 @@ function observeFields(observes: Observe[], compact: boolean = false) {
       value: observes.reduce((sum, observe) => `${sum}${observe.url}\n`, ''),
       inline: true,
     },
+    {
+      name: 'Scrape Interval',
+      value: observes.reduce(
+        (sum, observe) =>
+          `${sum}${ScrapeInterval.enumText(observe.scrapeInterval.type)}\n`,
+        ''
+      ),
+      inline: true,
+    },
   ];
 
   if (!compact) {
@@ -103,15 +112,6 @@ function observeFields(observes: Observe[], compact: boolean = false) {
         name: 'Current Text',
         value: observes.reduce(
           (sum, observe) => `${sum}${observe.currentText}\n`,
-          ''
-        ),
-        inline: true,
-      },
-      {
-        name: 'Scrape Interval',
-        value: observes.reduce(
-          (sum, observe) =>
-            `${sum}${ScrapeInterval.enumText(observe.scrapeInterval.type)}\n`,
           ''
         ),
         inline: true,
