@@ -55,8 +55,6 @@ ENV NODE_ENV production
 # Note: this installs the necessary libs to make the bundled version of Chrome that Puppeteer
 # installs, work.
 
-ENV PUPPETEER_SKIP_DOWNLOAD true
-
 RUN apt-get update \
     && apt-get install -y wget gnupg \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
