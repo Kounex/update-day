@@ -79,7 +79,7 @@ export default class implements Command {
 
       if (!!observe) {
         await interaction.reply({
-          embeds: [buildObserveEmbed(observe)],
+          embeds: [buildObserveEmbed(observe, { color: 'DarkBlue' })],
           ephemeral: true,
         });
       } else {

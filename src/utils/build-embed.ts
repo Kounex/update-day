@@ -1,6 +1,11 @@
-import { EmbedBuilder } from 'discord.js';
+import { ColorResolvable, EmbedBuilder } from 'discord.js';
 import { CommandResult } from '../types/interfaces/command-result.js';
 import { Observe, ScrapeInterval } from '../types/models/observe.js';
+
+export interface EmbedOptions {
+  description?: string;
+  color?: ColorResolvable;
+}
 
 export const buildCommandResultEmbed = (
   commandResult: CommandResult
@@ -53,14 +58,14 @@ export const buildObserveListEmbed = (
 
 export const buildObserveEmbed = (
   observe: Observe,
-  description?: string
+  options?: EmbedOptions
 ): EmbedBuilder => {
   const message = new EmbedBuilder();
 
   message
     .setTitle(observe.name)
-    .setColor('DarkGreen')
-    .setDescription(description ?? observe.url)
+    .setColor(options?.color ?? 'DarkGreen')
+    .setDescription(options?.description ?? observe.url)
     .addFields(observeFields([observe], false));
   // .setFooter({ text: `URL: ${observe.url}` });
 
