@@ -83,7 +83,7 @@ export const buildObserveEmbed = (
 function observeFields(observes: Observe[], compact: boolean = false) {
   const fields = [
     {
-      name: 'observes',
+      name: 'Name',
       value: observes.reduce((sum, observe) => `${sum}${observe.name}\n`, ''),
       inline: true,
     },
