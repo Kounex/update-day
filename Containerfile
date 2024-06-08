@@ -75,4 +75,4 @@ RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
 # Run everything after as non-privileged user.
 USER pptruser
 
-CMD ["/usr/local/bin/npx", "puppeteer", "browsers", "install", "chrome", ";" "node", "--enable-source-maps", "dist/scripts/start.js"]
+CMD npx puppeteer browsers install chrome && node dist/scripts/start.js --enable-source-maps
