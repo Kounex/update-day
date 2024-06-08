@@ -53,6 +53,6 @@ ENV NODE_ENV production
 # ENV BUILD_DATE $BUILD_DATE
 
 # Change user to non root
-USER 1000
+# USER 1000
 
 CMD ["node", "--enable-source-maps", "dist/scripts/start.js"]
