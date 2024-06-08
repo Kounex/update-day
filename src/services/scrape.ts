@@ -12,7 +12,9 @@ export default class ScrapeService {
   private readonly _browser: Promise<Browser>;
 
   constructor() {
-    this._browser = puppeteer.launch();
+    this._browser = puppeteer.launch({
+      executablePath: 'google-chrome-stable',
+    });
   }
 
   async observe(observe: Observe, initial?: boolean): Promise<ScrapeResult> {
