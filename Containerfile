@@ -68,9 +68,9 @@ RUN npx puppeteer browsers install chrome
 
 # Install puppeteer so it's available in the container.
 RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
-    && chown -R pptruser:pptruser /node_modules \
-    && chown -R pptruser:pptruser /package.json \
-    && chown -R pptruser:pptruser /package-lock.json
+    && chown -R pptruser:pptruser ./node_modules \
+    && chown -R pptruser:pptruser ./package.json \
+    && chown -R pptruser:pptruser ./package-lock.json
 
 # Run everything after as non-privileged user.
 USER pptruser
