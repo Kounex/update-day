@@ -64,9 +64,16 @@ RUN apt-get update \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# RUN npx puppeteer browsers install chrome
+RUN npx puppeteer browsers install chrome
 
-# Change user to non root
-# USER 1000
+# Install puppeteer so it's available in the container.
+RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
+    && chown -R pptruser:pptruser /home/pptruser \
+    && chown -R pptruser:pptruser /node_modules \
+    && chown -R pptruser:pptruser /package.json \
+    && chown -R pptruser:pptruser /package-lock.json
+
+# Run everything after as non-privileged user.
+USER pptruser
 
 CMD ["node", "--enable-source-maps", "dist/scripts/start.js"]
