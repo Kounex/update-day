@@ -2,7 +2,6 @@ FROM node:18-slim AS base
 
 # openssl will be a required package if base is updated to 18.16+ due to node:*-slim base distro change
 # https://github.com/prisma/prisma/issues/19729#issuecomment-1591270599
-# Install ffmpeg
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
     tini \
@@ -51,6 +50,18 @@ ENV DATA_DIR /data
 ENV NODE_ENV production
 # ENV COMMIT_HASH $COMMIT_HASH
 # ENV BUILD_DATE $BUILD_DATE
+
+# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
+# Note: this installs the necessary libs to make the bundled version of Chrome that Puppeteer
+# installs, work.
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
+    && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] https://dl-ssl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-khmeros fonts-kacst fonts-freefont-ttf libxss1 dbus dbus-x11 \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 # Change user to non root
 # USER 1000
