@@ -33,7 +33,8 @@ RUN yarn prisma generate
 RUN yarn build
 
 # Only keep what's necessary to run
-FROM registry.access.redhat.com/ubi8/nodejs-18 AS runner
+# FROM registry.access.redhat.com/ubi8/nodejs-18 AS runner
+FROM base AS runner
 
 WORKDIR /usr/app
 
