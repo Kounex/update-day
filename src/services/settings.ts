@@ -1,6 +1,6 @@
 import { Settings } from '@prisma/client';
 import { injectable } from 'inversify/lib/annotation/injectable.js';
-import { prisma } from '../utils/db';
+import { prisma } from '../utils/db.js';
 
 interface SettingsDefaults {
   userObserveLimit: number;
