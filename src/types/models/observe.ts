@@ -1,3 +1,4 @@
+import { Observe as PrismaObserve } from '@prisma/client';
 import { parse } from 'css-what';
 
 export enum ScrapeIntervalType {
@@ -68,6 +69,7 @@ export class ScrapeInterval {
 
 export class Observe {
   private constructor(
+    public readonly guildId: string,
     public readonly userId: string,
     public readonly createdAtMS: bigint,
     public readonly updatedAtMS: bigint,
@@ -85,6 +87,7 @@ export class Observe {
   ) {}
 
   public static create(
+    guildId: string,
     userId: string,
     createdAtMS: number | bigint,
     updatedAtMS: number | bigint,
@@ -113,6 +116,7 @@ export class Observe {
     }
 
     return new Observe(
+      guildId,
       userId,
       BigInt(createdAtMS),
       BigInt(updatedAtMS),
@@ -134,21 +138,9 @@ export class Observe {
     );
   }
 
-  public static fromPrisma(observe: {
-    userId: string;
-    createdAtMS: bigint;
-    updatedAtMS: bigint;
-    name: string;
-    url: string;
-    cssSelector: string;
-    currentText: string;
-    domElementProperty: string | null;
-    scrapeIntervalType: string;
-    keepActive: boolean;
-    active: boolean;
-    lastScrapeAtMS: bigint;
-  }) {
+  public static fromPrisma(observe: PrismaObserve) {
     return new Observe(
+      observe.guildId,
       observe.userId,
       observe.createdAtMS,
       observe.updatedAtMS,
@@ -167,6 +159,7 @@ export class Observe {
   public toPrisma() {
     return {
       data: {
+        guildId: this.guildId,
         userId: this.userId,
         createdAtMS: this.createdAtMS,
         updatedAtMS: this.updatedAtMS,

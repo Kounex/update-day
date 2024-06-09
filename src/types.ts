@@ -9,5 +9,6 @@ export const TYPES = {
   },
   Services: {
     Scrape: Symbol('Scrape'),
+    Settings: Symbol('Settings'),
   },
 };

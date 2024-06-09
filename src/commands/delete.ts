@@ -13,7 +13,7 @@ import Command from './command.js';
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('delete')
-    .setDescription('Delete on of your observes')
+    .setDescription('Delete on of your Observes')
     .addStringOption((option) =>
       option
         .setName('name')
@@ -46,7 +46,10 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    var observes = await this.observeManager.getObserves(interaction.user.id);
+    var observes = await this.observeManager.getObserves(
+      interaction.guildId!,
+      interaction.user.id
+    );
 
     const userText = interaction.options.getFocused();
 

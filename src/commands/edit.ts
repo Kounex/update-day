@@ -17,7 +17,7 @@ import Command from './command.js';
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('edit')
-    .setDescription('Edit one of your existing observes')
+    .setDescription('Edit one of your existing Observes')
     .addStringOption((option) =>
       option
         .setName('current-name')
@@ -101,6 +101,7 @@ export default class implements Command {
     const currentName = interaction.options.getString('current-name')!;
 
     const observe = Observe.create(
+      interaction.guildId!,
       interaction.user.id,
       Date.now(),
       Date.now(),
@@ -149,7 +150,10 @@ export default class implements Command {
     interaction: AutocompleteInteraction
   ): Promise<void> {
     var options: string[] = [];
-    const observes = await this.observeManager.getObserves(interaction.user.id);
+    const observes = await this.observeManager.getObserves(
+      interaction.guildId!,
+      interaction.user.id
+    );
     const currentName = interaction.options.getString('current-name');
     const focusedOption = interaction.options.getFocused(true);
 

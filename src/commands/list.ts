@@ -17,7 +17,7 @@ import Command from './command.js';
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('list')
-    .setDescription('List your observes')
+    .setDescription('List your Observes')
     .addStringOption((option) =>
       option
         .setName('name')
@@ -101,7 +101,10 @@ export default class implements Command {
   ): Promise<void> {
     const name = interaction.options.getString('name');
     const focusedOption = interaction.options.getFocused(true);
-    var observes = await this.observeManager.getObserves(interaction.user.id);
+    var observes = await this.observeManager.getObserves(
+      interaction.guildId!,
+      interaction.user.id
+    );
 
     switch (focusedOption.name) {
       case 'name': {

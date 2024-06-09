@@ -1,22 +1,34 @@
 import { inject, injectable } from 'inversify';
 import ScrapeService from '../services/scrape.js';
+import SettingsService from '../services/settings.js';
 import { TYPES } from '../types.js';
 import { CommandResult } from '../types/interfaces/command-result.js';
 import { Observe } from '../types/models/observe.js';
 import { prisma } from '../utils/db.js';
 
+interface CheckResult {
+  observes?: Observe[];
+  commandResult?: CommandResult;
+}
+
 @injectable()
 export default class {
   constructor(
-    @inject(TYPES.Services.Scrape) private readonly scrapeService: ScrapeService
+    @inject(TYPES.Services.Scrape)
+    private readonly scrapeService: ScrapeService,
+    @inject(TYPES.Services.Settings)
+    private readonly settingsService: SettingsService
   ) {}
 
-  public async getObserves(userId?: string): Promise<Observe[]> {
+  public async getObserves(
+    guildId?: string,
+    userId?: string
+  ): Promise<Observe[]> {
     return (
       await prisma.observe.findMany(
         !!userId
           ? {
-              where: { userId: userId },
+              where: { guildId, userId },
             }
           : undefined
       )
@@ -24,7 +36,15 @@ export default class {
   }
 
   public async addObserve(observe: Observe): Promise<CommandResult> {
-    const observes = await this.getObserves(observe.userId);
+    const checkResult = await this.checkObservesLimit(
+      observe.guildId,
+      observe.userId
+    );
+
+    if (!!checkResult.commandResult) {
+      return checkResult.commandResult;
+    }
+    const observes = checkResult.observes!;
 
     if (observes.some((userObserve) => userObserve.name == observe.name)) {
       return {
@@ -49,7 +69,10 @@ export default class {
     name: string,
     editedObserve: Observe
   ): Promise<CommandResult> {
-    const observes = await this.getObserves(editedObserve.userId);
+    const observes = await this.getObserves(
+      editedObserve.guildId,
+      editedObserve.userId
+    );
 
     // Find the [Observe] the user is trying to edit
     const currentObserve = observes.find((observe) => observe.name == name);
@@ -79,6 +102,7 @@ export default class {
     }
 
     const newObserve = Observe.create(
+      editedObserve.guildId,
       editedObserve.userId,
       currentObserve.createdAtMS,
       Date.now(),
@@ -146,5 +170,35 @@ export default class {
       successful: true,
       message: `Your Observe ${name} has been successfully deleted.`,
     };
+  }
+
+  private async checkObservesLimit(
+    guildId: string,
+    userId: string
+  ): Promise<CheckResult> {
+    const settings = await this.settingsService.getSettings(guildId);
+    const observes = await this.getObserves(guildId);
+
+    if (observes.length >= settings.guildObserveLimit) {
+      return {
+        commandResult: {
+          successful: false,
+          message: `The bot has reached it's limit for Observes per guild of \`${settings.guildObserveLimit}\`!`,
+        },
+      };
+    }
+
+    const userObserves = observes.filter((observe) => observe.userId == userId);
+
+    if (userObserves.length >= settings.userObserveLimit) {
+      return {
+        commandResult: {
+          successful: false,
+          message: `You have reached the limit of Observes per user of \`${settings.guildObserveLimit}\`!`,
+        },
+      };
+    }
+
+    return { observes: observes };
   }
 }

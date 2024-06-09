@@ -8,6 +8,7 @@ datasource db {
 }
 
 model Observe {
+  guildId               String  
   userId                String  
   createdAtMS           BigInt
   updatedAtMS           BigInt    @default(0)
@@ -21,5 +22,13 @@ model Observe {
   active                Boolean   @default(true)
   lastScrapeAtMS        BigInt    @default(0)
 
-  @@unique([userId, name])
+  @@unique([guildId, userId, name])
+}
+
+model Settings {
+  guildId                        String   @id
+  createdAtMS                    BigInt
+  updatedAtMS                    BigInt   @default(0)
+  userObserveLimit               Int      @default(10)
+  guildObserveLimit              Int      @default(100)
 }

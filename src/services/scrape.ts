@@ -12,7 +12,10 @@ export default class ScrapeService {
   private readonly _browser: Promise<Browser>;
 
   constructor() {
-    this._browser = puppeteer.launch();
+    this._browser = puppeteer.launch({
+      headless: true,
+      args: ['--disable-gpu', '--disable-setuid-sandbox', '--no-zygote'],
+    });
   }
 
   async observe(observe: Observe, initial?: boolean): Promise<ScrapeResult> {

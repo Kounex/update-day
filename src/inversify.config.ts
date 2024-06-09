@@ -11,6 +11,7 @@ import SchedulerManager from './managers/scheduler.js';
 
 // Services
 import ScrapeService from './services/scrape.js';
+import SettingsService from './services/settings.js';
 
 // Commands
 import Command from './commands/command.js';
@@ -18,6 +19,7 @@ import Delete from './commands/delete.js';
 import Edit from './commands/edit.js';
 import List from './commands/list.js';
 import Observe from './commands/observe.js';
+import Settings from './commands/settings.js';
 
 const container = new Container();
 
@@ -43,9 +45,10 @@ container
 
 // Services
 container.bind(TYPES.Services.Scrape).to(ScrapeService).inSingletonScope();
+container.bind(TYPES.Services.Settings).to(SettingsService).inSingletonScope();
 
 // Commands
-[Delete, Edit, List, Observe].forEach((command) => {
+[Delete, Edit, List, Observe, Settings].forEach((command) => {
   container.bind<Command>(TYPES.Command).to(command).inSingletonScope();
 });
 

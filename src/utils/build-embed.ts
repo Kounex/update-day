@@ -1,3 +1,4 @@
+import { Settings } from '@prisma/client';
 import { ColorResolvable, EmbedBuilder } from 'discord.js';
 import { CommandResult } from '../types/interfaces/command-result.js';
 import { Observe, ScrapeInterval } from '../types/models/observe.js';
@@ -6,6 +7,31 @@ export interface EmbedOptions {
   description?: string;
   color?: ColorResolvable;
 }
+
+export const buildSettingsEmbed = (settings: Settings): EmbedBuilder => {
+  const lastUpdated = Number(settings.updatedAtMS);
+  const message = new EmbedBuilder();
+
+  message
+    .setTitle('Settings')
+    .setColor('DarkBlue')
+    .setDescription('The following settings are currently active for this bot:')
+    .setFields([
+      {
+        name: 'Guild Observe Limit',
+        value: settings.guildObserveLimit.toString(),
+      },
+      {
+        name: 'User Observe Limit',
+        value: settings.userObserveLimit.toString(),
+      },
+    ])
+    .setFooter({
+      text: `last updated: ${lastUpdated == 0 ? '-' : lastUpdated}`,
+    });
+
+  return message;
+};
 
 export const buildCommandResultEmbed = (
   commandResult: CommandResult
@@ -60,14 +86,17 @@ export const buildObserveEmbed = (
   observe: Observe,
   options?: EmbedOptions
 ): EmbedBuilder => {
+  const lastUpdated = Number(observe.updatedAtMS);
   const message = new EmbedBuilder();
 
   message
     .setTitle(observe.name)
     .setColor(options?.color ?? 'DarkGreen')
     .setDescription(options?.description ?? observe.url)
-    .addFields(observeFields([observe], false));
-  // .setFooter({ text: `URL: ${observe.url}` });
+    .addFields(observeFields([observe], false))
+    .setFooter({
+      text: `last updated: ${lastUpdated == 0 ? '-' : lastUpdated}`,
+    });
 
   const pathArray = observe.url.split('/');
   const protocol = pathArray[0];

@@ -87,7 +87,8 @@ export default class implements Command {
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
     const observe = Observe.create(
-      interaction.user.id,
+      interaction.guildId!,
+      interaction.user.id!,
       Date.now(),
       0,
       interaction.options.getString('name')!,

@@ -6,7 +6,7 @@ import { ScrapeResultType } from '../types/classes/scrape-result.js';
 import { Observe } from '../types/models/observe.js';
 import { buildObserveEmbed } from '../utils/build-embed.js';
 import { prisma } from '../utils/db.js';
-import ObserverManager from './observe.js';
+import ObserveManager from './observe.js';
 
 @injectable()
 export default class {
@@ -16,7 +16,7 @@ export default class {
   constructor(
     @inject(TYPES.Client) private readonly client: Client,
     @inject(TYPES.Managers.Observe)
-    private readonly observeManager: ObserverManager,
+    private readonly observeManager: ObserveManager,
     @inject(TYPES.Services.Scrape) private readonly scrapeService: ScrapeService
   ) {}
 

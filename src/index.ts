@@ -11,8 +11,10 @@ const startBot = async () => {
   // await makeDirectory(config.DATA_DIR);
 
   // Start the Scheduler
-  const scheduler = container.get<SchedulerManager>(TYPES.Managers.Scheduler);
-  scheduler.init();
+  const schedulerManager = container.get<SchedulerManager>(
+    TYPES.Managers.Scheduler
+  );
+  schedulerManager.init();
 
   await bot.register();
 };
