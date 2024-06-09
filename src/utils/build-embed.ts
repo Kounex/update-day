@@ -92,7 +92,7 @@ export const buildObserveEmbed = (
   message
     .setTitle(observe.name)
     .setColor(options?.color ?? 'DarkGreen')
-    .setDescription(options?.description ?? observe.url)
+    .setDescription(options?.description ?? null)
     .addFields(observeFields([observe], false))
     .setFooter({
       text: `last updated: ${lastUpdated == 0 ? '-' : lastUpdated}`,
