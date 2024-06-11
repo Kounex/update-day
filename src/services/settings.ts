@@ -27,6 +27,7 @@ export default class SettingsService {
       guildObserveLimit?: number;
       timeoutLimit?: number;
       timeout?: number;
+      notifyOnFirstTimeout?: boolean;
     }
   ): Promise<void> {
     await prisma.settings.update({
@@ -37,6 +38,7 @@ export default class SettingsService {
         guildObserveLimit: settings.guildObserveLimit,
         timeoutLimit: settings.timeoutLimit,
         timeout: settings.timeout,
+        notifyOnFirstTimeout: settings.notifyOnFirstTimeout,
       },
     });
   }

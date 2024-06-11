@@ -50,7 +50,24 @@ export default class implements Command {
             .setName('timeout')
             .setDescription('Timeout in seconds')
             .setMinValue(1)
-            .setMinValue(60)
+            .setMaxValue(60)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('notify-on-first-timeout')
+        .setDescription(
+          'If you want the bot to notify users about a timeout (without hitting the limit), on by default'
+        )
+        .addStringOption((option) =>
+          option
+            .setName('notify')
+            .setDescription('Should notify')
+            .setChoices([
+              { name: 'Yes', value: 'true' },
+              { name: 'No', value: 'false' },
+            ])
             .setRequired(true)
         )
     )
@@ -156,6 +173,28 @@ export default class implements Command {
             buildCommandResultEmbed({
               successful: true,
               message: `New Observe consecutive timeout limit has been set to \`${limit}\``,
+            }),
+          ],
+          ephemeral: true,
+        });
+
+        break;
+      }
+
+      case 'notify-on-first-timeout': {
+        const notify = Boolean(interaction.options.getString('notify'));
+
+        await this.settingsService.updateSettings(interaction.guildId!, {
+          notifyOnFirstTimeout: notify,
+        });
+
+        await interaction.reply({
+          embeds: [
+            buildCommandResultEmbed({
+              successful: true,
+              message: notify
+                ? `The bot will now notify users about a first timeout of their Observes!`
+                : `The bot won't notify users about timeouts of their Observe, only once they hit the consecutive limit and their Observe will be deactivated!`,
             }),
           ],
           ephemeral: true,

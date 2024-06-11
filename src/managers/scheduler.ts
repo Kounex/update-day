@@ -97,7 +97,11 @@ export default class {
   }
 
   private async handleTimeoutScenarios(observe: Observe): Promise<void> {
-    if (observe.consecutiveTimeouts == 0) {
+    if (
+      observe.consecutiveTimeouts == 0 &&
+      (await this.settingsService.getSettings(observe.guildId))
+        .notifyOnFirstTimeout
+    ) {
       this.client.users.fetch(observe.userId).then((user) =>
         user.send({
           content: `While trying to observe \`${observe.name}\` on \`${observe.url}\`, we ran into a timeout. Check if the page itself still works and adjust if necessary. The bot will try again until it ran into a timeout 3 times consecutively where it will deactivate this Observe!`,

@@ -34,4 +34,5 @@ model Settings {
   guildObserveLimit              Int      @default(100)
   timeoutLimit                   Int      @default(3)
   timeout                        Int      @default(15)
+  notifyOnFirstTimeout           Boolean  @default(true)
 }
