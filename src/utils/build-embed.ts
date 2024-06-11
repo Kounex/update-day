@@ -19,11 +19,19 @@ export const buildSettingsEmbed = (settings: Settings): EmbedBuilder => {
     .setFields([
       {
         name: 'Guild Observe Limit',
-        value: settings.guildObserveLimit.toString(),
+        value: `${settings.guildObserveLimit}`,
       },
       {
         name: 'User Observe Limit',
-        value: settings.userObserveLimit.toString(),
+        value: `${settings.userObserveLimit}`,
+      },
+      {
+        name: 'Amount of maximum consecutive timeouts',
+        value: `${settings.timeoutLimit}`,
+      },
+      {
+        name: 'Scrape timeout',
+        value: `${settings.timeout} seconds`,
       },
     ])
     .setFooter({

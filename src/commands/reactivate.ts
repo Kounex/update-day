@@ -47,21 +47,21 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    var observes = await this.observeManager.getObserves(
-      interaction.guildId!,
-      interaction.user.id
-    );
+    var observes = (
+      await this.observeManager.getObserves(
+        interaction.guildId!,
+        interaction.user.id
+      )
+    ).filter((observe) => !observe.active);
 
     const userText = interaction.options.getFocused();
 
     if (userText.trim().length > 0) {
-      observes = observes.filter(
-        (observe) =>
-          !observe.active &&
-          observe.name
-            .toLocaleLowerCase()
-            .trim()
-            .includes(userText.toLocaleLowerCase().trim())
+      observes = observes.filter((observe) =>
+        observe.name
+          .toLocaleLowerCase()
+          .trim()
+          .includes(userText.toLocaleLowerCase().trim())
       );
     }
 

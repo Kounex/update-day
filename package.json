@@ -1,6 +1,6 @@
 {
   "name": "update-day",
-  "version": "0.9.11",
+  "version": "0.9.12",
   "description": "A Discord bot to notify you about website changes",
   "repository": "git@github.com:Kounex/update-day.git",
   "author": "Kounex <r.schramowski@googlemail.com>",
