@@ -33,6 +33,10 @@ export const buildSettingsEmbed = (settings: Settings): EmbedBuilder => {
         name: 'Scrape timeout',
         value: `${settings.timeout} seconds`,
       },
+      {
+        name: 'Notify users of a first timeout',
+        value: `${settings.notifyOnFirstTimeout}`,
+      },
     ])
     .setFooter({
       text: `last updated: ${lastUpdated == 0 ? '-' : lastUpdated}`,
@@ -170,7 +174,7 @@ function observeFields(observes: Observe[], compact: boolean = false) {
       {
         name: 'Keep Active',
         value: observes.reduce(
-          (sum, observe) => `${sum}${observe.keepActive ? 'Yes' : 'No'}\n`,
+          (sum, observe) => `${sum}${observe.keepActive}\n`,
           ''
         ),
         inline: true,

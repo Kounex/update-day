@@ -26,27 +26,19 @@ export default class implements Command {
         )
         .setAutocomplete(true)
     )
-    .addStringOption((option) =>
+    .addBooleanOption((option) =>
       option
         .setName('active-only')
         .setDescription(
-          'If you only want to see your active observes, yes by default'
+          'If you only want to see your active observes, true by default'
         )
-        .setChoices([
-          { name: 'Yes', value: 'true' },
-          { name: 'No', value: 'false' },
-        ])
     )
-    .addStringOption((option) =>
+    .addBooleanOption((option) =>
       option
         .setName('compact')
         .setDescription(
-          'If you want to see your observes in a compact list, yes by default'
+          'If you want to see your observes in a compact list, true by default'
         )
-        .setChoices([
-          { name: 'Yes', value: 'true' },
-          { name: 'No', value: 'false' },
-        ])
     );
 
   constructor(
@@ -58,14 +50,8 @@ export default class implements Command {
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
     const name = interaction.options.getString('name');
-    const activeOnly =
-      interaction.options.getString('active-only') != null
-        ? Boolean(interaction.options.getString('active'))
-        : true;
-    const compact =
-      interaction.options.getString('compact') != null
-        ? Boolean(interaction.options.getString('compact'))
-        : true;
+    const activeOnly = interaction.options.getBoolean('active-only') ?? true;
+    const compact = interaction.options.getBoolean('compact') != null ?? true;
 
     const observes = await this.observeManager.getObserves(interaction.user.id);
 

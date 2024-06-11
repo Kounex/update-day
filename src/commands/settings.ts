@@ -56,23 +56,6 @@ export default class implements Command {
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('notify-on-first-timeout')
-        .setDescription(
-          'If you want the bot to notify users about a timeout (without hitting the limit), on by default'
-        )
-        .addStringOption((option) =>
-          option
-            .setName('notify')
-            .setDescription('Should notify')
-            .setChoices([
-              { name: 'Yes', value: 'true' },
-              { name: 'No', value: 'false' },
-            ])
-            .setRequired(true)
-        )
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
         .setName('set-timeout-limit')
         .setDescription(
           'Set the maximum amount of consecutive timeouts for Observes until they get deactivated'
@@ -82,6 +65,19 @@ export default class implements Command {
             .setName('limit')
             .setDescription('Maximum consecutive timeouts per Observe')
             .setMinValue(1)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('notify-on-first-timeout')
+        .setDescription(
+          'If you want the bot to notify users about a timeout (without hitting the limit), true by default'
+        )
+        .addBooleanOption((option) =>
+          option
+            .setName('notify')
+            .setDescription('Should notify')
             .setRequired(true)
         )
     )
@@ -182,7 +178,7 @@ export default class implements Command {
       }
 
       case 'notify-on-first-timeout': {
-        const notify = Boolean(interaction.options.getString('notify'));
+        const notify = interaction.options.getBoolean('notify')!;
 
         await this.settingsService.updateSettings(interaction.guildId!, {
           notifyOnFirstTimeout: notify,

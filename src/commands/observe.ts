@@ -66,16 +66,12 @@ export default class implements Command {
           'By default, the bot will check the `innerText`, can also be href, data, value etc.'
         )
     )
-    .addStringOption((option) =>
+    .addBooleanOption((option) =>
       option
         .setName('keep-active')
         .setDescription(
-          'If you want to deactivate the observe once it found a change, on by default'
+          'If you want to deactivate the observe once it found a change, true by default'
         )
-        .setChoices([
-          { name: 'Yes', value: 'true' },
-          { name: 'No', value: 'false' },
-        ])
     );
 
   constructor(
@@ -97,9 +93,7 @@ export default class implements Command {
       interaction.options.getString('current-text')!,
       interaction.options.getString('scrape-interval'),
       interaction.options.getString('dom-element-property'),
-      interaction.options.getString('keep-active') != null
-        ? Boolean(interaction.options.getString('keep-active'))
-        : false
+      interaction.options.getBoolean('keep-active') ?? false
     );
 
     if (observe instanceof Observe) {
