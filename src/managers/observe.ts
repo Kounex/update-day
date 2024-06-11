@@ -49,7 +49,7 @@ export default class {
     if (observes.some((userObserve) => userObserve.name == observe.name)) {
       return {
         successful: false,
-        message: `You already have an observe with the name ${observe.name}! Check your observes with \`/list\` and choose another name if you still want to add a new one!`,
+        message: `You already have an observe with the name \`${observe.name}\`! Check your observes with \`/list\` and choose another name if you still want to add a new one!`,
       };
     }
 
@@ -81,7 +81,7 @@ export default class {
     if (!currentObserve) {
       return {
         successful: false,
-        message: `No observe of yours found with the name ${name}! Check your observes with \`/list\` and choose another name if you still want to edit an observe of yours!`,
+        message: `No observe of yours found with the name \`${name}\`! Check your observes with \`/list\` and choose another name if you still want to edit an observe of yours!`,
       };
     }
 
@@ -97,7 +97,7 @@ export default class {
     ) {
       return {
         successful: false,
-        message: `You already have an observe with the name ${editedObserve.name}! Check your observes with \`/list\` and choose another name if you still want to edit your observe!`,
+        message: `You already have an observe with the name \`${editedObserve.name}\`! Check your observes with \`/list\` and choose another name if you still want to edit your observe!`,
       };
     }
 
@@ -164,13 +164,13 @@ export default class {
     if (count < 1) {
       return {
         successful: false,
-        message: `Did not find a observe to delete with the name ${name}. Make sure it exists with \`/list\`.`,
+        message: `Did not find a observe to delete with the name \`${name}\`. Make sure it exists with \`/list\`.`,
       };
     }
 
     return {
       successful: true,
-      message: `Your Observe ${name} has been successfully deleted.`,
+      message: `Your Observe \`${name}\` has been successfully deleted.`,
     };
   }
 
@@ -194,13 +194,13 @@ export default class {
     if (count < 1) {
       return {
         successful: false,
-        message: `Did not find a observe to reactivate with the name ${name}. Make sure it exists and is currently not active with \`/list\`.`,
+        message: `Did not find a observe to reactivate with the name \`${name}\`. Make sure it exists and is currently not active with \`/list\`.`,
       };
     }
 
     return {
       successful: true,
-      message: `Your Observe ${name} has been successfully reactivated.`,
+      message: `Your Observe \`${name}\` has been successfully reactivated.`,
     };
   }
 
@@ -215,7 +215,7 @@ export default class {
       return {
         commandResult: {
           successful: false,
-          message: `The bot has reached it's limit for Observes per guild of \`${settings.guildObserveLimit}\`!`,
+          message: `The bot has reached it's limit for Observes per guild!`,
         },
       };
     }
@@ -226,7 +226,7 @@ export default class {
       return {
         commandResult: {
           successful: false,
-          message: `You have reached the limit of Observes per user of \`${settings.guildObserveLimit}\`!`,
+          message: `You have reached the limit of Observes per user!`,
         },
       };
     }

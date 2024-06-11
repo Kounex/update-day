@@ -1,5 +1,5 @@
 import { injectable } from 'inversify/lib/annotation/injectable.js';
-import puppeteer, { Browser } from 'puppeteer';
+import puppeteer from 'puppeteer';
 import {
   ScrapeResult,
   ScrapeResultType,
@@ -9,14 +9,11 @@ import { prisma } from '../utils/db.js';
 
 @injectable()
 export default class ScrapeService {
-  private readonly _browser: Promise<Browser>;
-
-  constructor() {
-    this._browser = puppeteer.launch();
-  }
+  constructor() {}
 
   async observe(observe: Observe, initial?: boolean): Promise<ScrapeResult> {
-    const page = await (await this._browser).newPage();
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
 
     await page.goto(observe.url);
 
@@ -30,7 +27,7 @@ export default class ScrapeService {
         throw Error;
       }
     } catch (_) {
-      await page.close();
+      await browser.close();
       if (!!initial) {
         return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
       }
@@ -46,7 +43,7 @@ export default class ScrapeService {
       domElementProperty
     );
 
-    await page.close();
+    await browser.close();
 
     if (
       text == null ||

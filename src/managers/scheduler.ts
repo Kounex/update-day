@@ -10,7 +10,6 @@ import ObserveManager from './observe.js';
 
 @injectable()
 export default class {
-  private _cachedObserves: Observe[] = [];
   private _activeObserves: Observe[] = [];
 
   constructor(
@@ -21,8 +20,6 @@ export default class {
   ) {}
 
   public init(): void {
-    // To enable the checkObserves function to access this, we need to bind
-    // setInterval(this.refreshCacheObserves.bind(this), 300_000);
     setInterval(this.checkObserves.bind(this), 15_000);
   }
 
