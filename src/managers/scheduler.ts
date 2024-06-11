@@ -10,8 +10,8 @@ import ObserveManager from './observe.js';
 
 @injectable()
 export default class {
-  private cachedObserves: Observe[] = [];
-  private observing: boolean = false;
+  private _cachedObserves: Observe[] = [];
+  private _activeObserves: Observe[] = [];
 
   constructor(
     @inject(TYPES.Client) private readonly client: Client,
@@ -26,15 +26,9 @@ export default class {
     setInterval(this.checkObserves.bind(this), 15_000);
   }
 
-  private async refreshCacheObserves(): Promise<void> {
-    if (!this.observing) {
-      this.cachedObserves = await this.observeManager.getObserves();
-    }
-  }
-
   private async checkObserves(): Promise<void> {
-    this.observing = true;
     for (const observe of await this.observeManager.getObserves()) {
+      this._activeObserves.push(observe);
       if (
         Number(observe.lastScrapeAtMS) + observe.scrapeInterval.durationMS <
         Date.now()
@@ -59,9 +53,10 @@ export default class {
               })
             );
           }
+
+          this._activeObserves.splice(this._activeObserves.indexOf(observe), 1);
         });
       }
     }
-    this.observing = false;
   }
 }

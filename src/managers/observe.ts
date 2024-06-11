@@ -149,11 +149,13 @@ export default class {
   }
 
   public async deleteObserve(
+    guildId: string,
     userId: string,
     name: string
   ): Promise<CommandResult> {
     const { count } = await prisma.observe.deleteMany({
       where: {
+        guildId: guildId,
         userId: userId,
         name: name,
       },
@@ -169,6 +171,36 @@ export default class {
     return {
       successful: true,
       message: `Your Observe ${name} has been successfully deleted.`,
+    };
+  }
+
+  public async reactivateObserve(
+    guildId: string,
+    userId: string,
+    name: string
+  ): Promise<CommandResult> {
+    const { count } = await prisma.observe.updateMany({
+      where: {
+        guildId: guildId,
+        userId: userId,
+        name: name,
+      },
+      data: {
+        active: true,
+        updatedAtMS: Date.now(),
+      },
+    });
+
+    if (count < 1) {
+      return {
+        successful: false,
+        message: `Did not find a observe to reactivate with the name ${name}. Make sure it exists and is currently not active with \`/list\`.`,
+      };
+    }
+
+    return {
+      successful: true,
+      message: `Your Observe ${name} has been successfully reactivated.`,
     };
   }
 

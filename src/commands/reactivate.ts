@@ -12,12 +12,12 @@ import Command from './command.js';
 @injectable()
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
-    .setName('delete')
-    .setDescription('Delete on of your Observes')
+    .setName('reactivate')
+    .setDescription('Reactivate on of your Observes')
     .addStringOption((option) =>
       option
         .setName('name')
-        .setDescription('Name of your observe to delete')
+        .setDescription('Name of your observe to reactivate')
         .setAutocomplete(true)
         .setRequired(true)
     );
@@ -32,7 +32,7 @@ export default class implements Command {
   ): Promise<void> {
     const name = interaction.options.getString('name')!;
 
-    const commandResult = await this.observeManager.deleteObserve(
+    const commandResult = await this.observeManager.reactivateObserve(
       interaction.guildId!,
       interaction.user.id,
       name
@@ -55,11 +55,13 @@ export default class implements Command {
     const userText = interaction.options.getFocused();
 
     if (userText.trim().length > 0) {
-      observes = observes.filter((observe) =>
-        observe.name
-          .toLocaleLowerCase()
-          .trim()
-          .includes(userText.toLocaleLowerCase().trim())
+      observes = observes.filter(
+        (observe) =>
+          !observe.active &&
+          observe.name
+            .toLocaleLowerCase()
+            .trim()
+            .includes(userText.toLocaleLowerCase().trim())
       );
     }
 
