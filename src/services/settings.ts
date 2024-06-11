@@ -22,7 +22,12 @@ export default class SettingsService {
 
   public async updateSettings(
     guildId: string,
-    settings: { userObserveLimit?: number; guildObserveLimit?: number }
+    settings: {
+      userObserveLimit?: number;
+      guildObserveLimit?: number;
+      timeoutLimit?: number;
+      timeout?: number;
+    }
   ): Promise<void> {
     await prisma.settings.update({
       where: { guildId },
@@ -30,6 +35,8 @@ export default class SettingsService {
         updatedAtMS: BigInt(Date.now()),
         userObserveLimit: settings.userObserveLimit,
         guildObserveLimit: settings.guildObserveLimit,
+        timeoutLimit: settings.timeoutLimit,
+        timeout: settings.timeout,
       },
     });
   }

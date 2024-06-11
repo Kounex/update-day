@@ -83,7 +83,8 @@ export class Observe {
     ),
     public readonly keepActive: boolean = false,
     public readonly active: boolean = true,
-    public readonly lastScrapeAtMS: bigint = BigInt(0)
+    public readonly lastScrapeAtMS: bigint = BigInt(0),
+    public readonly consecutiveTimeouts: number = 0
   ) {}
 
   public static create(
@@ -99,7 +100,8 @@ export class Observe {
     domElementProperty?: string | null,
     keepActive: boolean = false,
     active: boolean = true,
-    lastScrapeAtMS: number | bigint = BigInt(0)
+    lastScrapeAtMS: number | bigint = BigInt(0),
+    consecutiveTimeouts: number = 0
   ): Observe | Error {
     if (!this.isValidURL(url.trim())) {
       return {
@@ -134,7 +136,8 @@ export class Observe {
           ),
       keepActive,
       active,
-      BigInt(lastScrapeAtMS)
+      BigInt(lastScrapeAtMS),
+      consecutiveTimeouts
     );
   }
 
@@ -152,7 +155,8 @@ export class Observe {
       new ScrapeInterval(ScrapeInterval.toEnumType(observe.scrapeIntervalType)),
       observe.keepActive,
       observe.active,
-      observe.lastScrapeAtMS
+      observe.lastScrapeAtMS,
+      observe.consecutiveTimeouts
     );
   }
 
@@ -172,6 +176,7 @@ export class Observe {
         keepActive: this.keepActive,
         active: this.active,
         lastScrapeAtMS: this.lastScrapeAtMS,
+        consecutiveTimeouts: this.consecutiveTimeouts,
       },
     };
   }

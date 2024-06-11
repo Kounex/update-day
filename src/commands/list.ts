@@ -28,7 +28,7 @@ export default class implements Command {
     )
     .addStringOption((option) =>
       option
-        .setName('active')
+        .setName('active-only')
         .setDescription(
           'If you only want to see your active observes, yes by default'
         )
@@ -58,8 +58,8 @@ export default class implements Command {
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
     const name = interaction.options.getString('name');
-    const active =
-      interaction.options.getString('active') != null
+    const activeOnly =
+      interaction.options.getString('active-only') != null
         ? Boolean(interaction.options.getString('active'))
         : true;
     const compact =
@@ -71,7 +71,7 @@ export default class implements Command {
 
     if (name == null) {
       await interaction.reply({
-        embeds: [buildObserveListEmbed(observes, active, compact)],
+        embeds: [buildObserveListEmbed(observes, activeOnly, compact)],
         ephemeral: true,
       });
     } else {

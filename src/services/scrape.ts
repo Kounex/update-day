@@ -7,30 +7,39 @@ import {
 import { Observe } from '../types/models/observe.js';
 import { prisma } from '../utils/db.js';
 
+import { inject } from 'inversify';
+import { TYPES } from '../types.js';
+import SettingsService from './settings.js';
+
 @injectable()
 export default class ScrapeService {
-  constructor() {}
+  constructor(
+    @inject(TYPES.Services.Settings)
+    private readonly settingsService: SettingsService
+  ) {}
 
   async observe(observe: Observe, initial?: boolean): Promise<ScrapeResult> {
+    const settings = await this.settingsService.getSettings(observe.guildId);
+
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
     await page.goto(observe.url);
 
-    var element;
+    // var element;
     try {
-      element = await page.waitForSelector(observe.cssSelector, {
-        timeout: 10_000,
-      });
-
-      if (element == null) {
-        throw Error;
-      }
+      await page.waitForNetworkIdle({ timeout: settings.timeout * 1000 });
     } catch (_) {
       await browser.close();
       if (!!initial) {
         return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
       }
+      return new ScrapeResult(observe, ScrapeResultType.Timeout);
+    }
+
+    const element = await page.$(observe.cssSelector);
+
+    if (element == null) {
       return this.handleFoundChange(observe);
     }
 

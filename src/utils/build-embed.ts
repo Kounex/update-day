@@ -48,21 +48,21 @@ export const buildCommandResultEmbed = (
 
 export const buildObserveListEmbed = (
   observes: Observe[],
-  active: boolean,
+  activeOnly: boolean,
   compact: boolean
 ): EmbedBuilder => {
   const message = new EmbedBuilder();
-  const embedObserves = active
+  const embedObserves = activeOnly
     ? observes.filter((observe) => observe.active)
     : observes.sort((a, b) => Number(a.active) - Number(b.active));
 
   message
-    .setTitle(`Your ${active ? 'active' : ''} Observes`)
+    .setTitle(`Your ${activeOnly ? 'active' : ''} Observes`)
     .setColor('DarkBlue')
     .setDescription(
       embedObserves.length < 1
         ? `You don't have any ${
-            active ? 'active' : ''
+            activeOnly ? 'active' : ''
           } Observes. Create a new Observe with \`/observe\`${
             observes.length < 0
               ? ' or change the active state of one of your existing observes with `/edit`'
@@ -75,7 +75,7 @@ export const buildObserveListEmbed = (
     const fields = observeFields(embedObserves, compact);
 
     message.setFields(fields).setFooter({
-      text: `${embedObserves.length} ${active ? 'active' : ''} Observes`,
+      text: `${embedObserves.length} ${activeOnly ? 'active' : ''} Observes`,
     });
   }
 

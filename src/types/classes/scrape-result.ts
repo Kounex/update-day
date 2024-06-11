@@ -5,6 +5,7 @@ export enum ScrapeResultType {
   NoChange,
   ElementNotFound,
   TextNotFound,
+  Timeout,
   Unknown,
 }
 export class ScrapeResult {
@@ -33,6 +34,9 @@ export class ScrapeResult {
       }
       case ScrapeResultType.TextNotFound: {
         return `Text \`${this.observe.currentText}\` not found for element with CSS-Selector \`${this.observe.cssSelector}\` on website \`${this.observe.url}\`!`;
+      }
+      case ScrapeResultType.Timeout: {
+        return `Your Observe \`${this.observe.name}\` on \`${this.observe.url}\`ran into a timeout!`;
       }
       case ScrapeResultType.Unknown: {
         return `Unknown, not handled error occurred while trying to scrape:\n$observe`;
