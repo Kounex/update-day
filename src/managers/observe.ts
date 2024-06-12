@@ -102,8 +102,8 @@ export default class {
     }
 
     const newObserve = Observe.create(
-      editedObserve.guildId,
-      editedObserve.userId,
+      currentObserve.guildId,
+      currentObserve.userId,
       currentObserve.createdAtMS,
       Date.now(),
       editedObserve.name,
@@ -113,8 +113,11 @@ export default class {
       editedObserve.scrapeInterval,
       editedObserve.domElementProperty,
       editedObserve.keepActive,
-      editedObserve.active,
-      editedObserve.lastScrapeAtMS
+      currentObserve.active,
+      currentObserve.lastScrapeAtMS,
+      currentObserve.consecutiveTimeouts,
+      currentObserve.timeouts,
+      currentObserve.thumbnail
     );
 
     if (newObserve instanceof Observe) {
@@ -123,10 +126,10 @@ export default class {
 
       const { count } = await prisma.observe.updateMany({
         where: {
-          userId: editedObserve.userId,
+          userId: newObserve.userId,
           name: name,
         },
-        data: editedObserve.toPrisma()['data'],
+        data: newObserve.toPrisma()['data'],
       });
 
       if (count < 1) {

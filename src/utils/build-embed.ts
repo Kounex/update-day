@@ -27,7 +27,7 @@ export const buildSettingsEmbed = (settings: Settings): EmbedBuilder => {
       },
       {
         name: 'Amount of maximum consecutive timeouts',
-        value: `${settings.timeoutLimit}`,
+        value: `${settings.consecutiveTimeoutsLimit}`,
       },
       {
         name: 'Scrape timeout',
@@ -36,6 +36,10 @@ export const buildSettingsEmbed = (settings: Settings): EmbedBuilder => {
       {
         name: 'Notify users of a first timeout',
         value: `${settings.notifyOnFirstTimeout}`,
+      },
+      {
+        name: 'Cumulative timeouts until users get notified',
+        value: `${settings.timeoutsTillNotify}`,
       },
     ])
     .setFooter({
@@ -110,13 +114,9 @@ export const buildObserveEmbed = (
       text: `last updated: ${lastUpdated == 0 ? '-' : lastUpdated}`,
     });
 
-  const pathArray = observe.url.split('/');
-  const protocol = pathArray[0];
-  const host = pathArray[2];
-
-  const favicon = `${protocol}//${host}/favicon.png`;
-
-  // message.setThumbnail(favicon);
+  if (observe.thumbnail != null) {
+    message.setThumbnail(observe.thumbnail);
+  }
 
   return message;
 };
@@ -175,6 +175,14 @@ function observeFields(observes: Observe[], compact: boolean = false) {
         name: 'Keep Active',
         value: observes.reduce(
           (sum, observe) => `${sum}${observe.keepActive}\n`,
+          ''
+        ),
+        inline: true,
+      },
+      {
+        name: 'Timeouts',
+        value: observes.reduce(
+          (sum, observe) => `${sum}${observe.timeouts}\n`,
           ''
         ),
         inline: true,

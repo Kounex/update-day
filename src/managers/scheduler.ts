@@ -67,6 +67,7 @@ export default class {
         },
         data: {
           consecutiveTimeouts: observe.consecutiveTimeouts + 1,
+          timeouts: observe.timeouts + 1,
         },
       });
 
@@ -97,27 +98,32 @@ export default class {
   }
 
   private async handleTimeoutScenarios(observe: Observe): Promise<void> {
-    if (
-      observe.consecutiveTimeouts == 0 &&
-      (await this.settingsService.getSettings(observe.guildId))
-        .notifyOnFirstTimeout
-    ) {
-      this.client.users.fetch(observe.userId).then((user) =>
-        user.send({
-          content: `While trying to observe \`${observe.name}\` on \`${observe.url}\`, we ran into a timeout. Check if the page itself still works and adjust if necessary. The bot will try again until it ran into a timeout 3 times consecutively where it will deactivate this Observe!`,
-          embeds: [buildObserveEmbed(observe, { color: 'DarkOrange' })],
-        })
-      );
-    } else if (
-      observe.consecutiveTimeouts >=
-      (await this.settingsService.getSettings(observe.guildId)).timeoutLimit - 1
-    ) {
-      this.client.users.fetch(observe.userId).then((user) =>
-        user.send({
-          content: `Your Observe \`${observe.name}\` on \`${observe.url}\`has reached the maximum amount of consecutive timeouts and has been deactivated!`,
-          embeds: [buildObserveEmbed(observe, { color: 'DarkRed' })],
-        })
-      );
-    }
+    this.settingsService.getSettings(observe.guildId).then((settings) => {
+      if (observe.consecutiveTimeouts == 0 && settings.notifyOnFirstTimeout) {
+        this.client.users.fetch(observe.userId).then((user) =>
+          user.send({
+            content: `While trying to observe \`${observe.name}\` on \`${observe.url}\`, we ran into a timeout. Check if the page itself still works and adjust if necessary. The bot will try again until it ran into a timeout 3 times consecutively where it will deactivate this Observe!`,
+            embeds: [buildObserveEmbed(observe, { color: 'DarkOrange' })],
+          })
+        );
+      } else if (
+        observe.consecutiveTimeouts >=
+        settings.consecutiveTimeoutsLimit - 1
+      ) {
+        this.client.users.fetch(observe.userId).then((user) =>
+          user.send({
+            content: `Your Observe \`${observe.name}\` on \`${observe.url}\`has reached the maximum amount of consecutive timeouts and has been deactivated!`,
+            embeds: [buildObserveEmbed(observe, { color: 'DarkRed' })],
+          })
+        );
+      } else if (observe.timeouts == settings.timeoutsTillNotify - 1) {
+        this.client.users.fetch(observe.userId).then((user) =>
+          user.send({
+            content: `Your Observe \`${observe.name}\` on \`${observe.url}\`has reached a total of ${settings.timeoutsTillNotify} timeouts. Make sure the URL is working. It might just temporarily (or sometimes) response slow which results in such a timeout. The bot might also have a too tight timeout window which an admin of this server could increase. Nonetheless: a timeout means no actual scraping has been done and depending on your scrape interval, this could leave huge time gaps where we don't know if one of your Observes might have changed. Any form of action is therefore advised!`,
+            embeds: [buildObserveEmbed(observe, { color: 'DarkRed' })],
+          })
+        );
+      }
+    });
   }
 }

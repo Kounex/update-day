@@ -2,11 +2,6 @@ import { Settings } from '@prisma/client';
 import { injectable } from 'inversify/lib/annotation/injectable.js';
 import { prisma } from '../utils/db.js';
 
-interface SettingsDefaults {
-  userObserveLimit: number;
-  guildObserveLimit: number;
-}
-
 @injectable()
 export default class SettingsService {
   constructor() {}
@@ -25,9 +20,10 @@ export default class SettingsService {
     settings: {
       userObserveLimit?: number;
       guildObserveLimit?: number;
-      timeoutLimit?: number;
+      consecutiveTimeoutsLimit?: number;
       timeout?: number;
       notifyOnFirstTimeout?: boolean;
+      timeoutsTillNotify?: number;
     }
   ): Promise<void> {
     await prisma.settings.update({
@@ -36,9 +32,10 @@ export default class SettingsService {
         updatedAtMS: BigInt(Date.now()),
         userObserveLimit: settings.userObserveLimit,
         guildObserveLimit: settings.guildObserveLimit,
-        timeoutLimit: settings.timeoutLimit,
+        consecutiveTimeoutsLimit: settings.consecutiveTimeoutsLimit,
         timeout: settings.timeout,
         notifyOnFirstTimeout: settings.notifyOnFirstTimeout,
+        timeoutsTillNotify: settings.timeoutsTillNotify,
       },
     });
   }

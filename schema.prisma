@@ -22,6 +22,8 @@ model Observe {
   active                Boolean   @default(true)
   lastScrapeAtMS        BigInt    @default(0)
   consecutiveTimeouts   Int       @default(0)
+  timeouts              Int       @default(0)
+  thumbnail             String?
 
   @@unique([guildId, userId, name])
 }
@@ -32,7 +34,8 @@ model Settings {
   updatedAtMS                    BigInt   @default(0)
   userObserveLimit               Int      @default(10)
   guildObserveLimit              Int      @default(100)
-  timeoutLimit                   Int      @default(3)
+  consecutiveTimeoutsLimit       Int      @default(3)
   timeout                        Int      @default(15)
-  notifyOnFirstTimeout           Boolean  @default(true)
+  notifyOnFirstTimeout           Boolean  @default(false)
+  timeoutsTillNotify             Int      @default(10)
 }

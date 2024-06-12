@@ -37,6 +37,16 @@ export default class ScrapeService {
       return new ScrapeResult(observe, ScrapeResultType.Timeout);
     }
 
+    /// Try to get thumbnail
+    observe.thumbnail = await page.evaluate(() => {
+      // Get all link elements in the head
+      const linkElements = document.querySelectorAll(
+        'head link[rel="icon"][type^="image/"]'
+      );
+      // Return the href attribute of the first matching link element, if exists
+      return linkElements.length ? linkElements[0].getAttribute('href') : null;
+    });
+
     const element = await page.$(observe.cssSelector);
 
     if (element == null) {

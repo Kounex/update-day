@@ -58,12 +58,26 @@ export default class implements Command {
       subcommand
         .setName('set-timeout-limit')
         .setDescription(
-          'Set the maximum amount of consecutive timeouts for Observes until they get deactivated'
+          'Sets the maximum amount of consecutive timeouts for Observes until they get deactivated'
         )
         .addIntegerOption((option) =>
           option
             .setName('limit')
             .setDescription('Maximum consecutive timeouts per Observe')
+            .setMinValue(1)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('timeouts-till-notify')
+        .setDescription(
+          'Sets the amount of cumulative timeouts for Observes until users get notified'
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('amount')
+            .setDescription('Cumulative timeouts per Observe')
             .setMinValue(1)
             .setRequired(true)
         )
@@ -77,10 +91,11 @@ export default class implements Command {
         .addBooleanOption((option) =>
           option
             .setName('notify')
-            .setDescription('Should notify')
+            .setDescription('Should notify on first timeout')
             .setRequired(true)
         )
     )
+
     .addSubcommand((subcommand) =>
       subcommand.setName('list').setDescription('Show all settings')
     );
@@ -161,7 +176,7 @@ export default class implements Command {
         const limit = interaction.options.getInteger('limit')!;
 
         await this.settingsService.updateSettings(interaction.guildId!, {
-          timeoutLimit: limit,
+          consecutiveTimeoutsLimit: limit,
         });
 
         await interaction.reply({
@@ -169,6 +184,26 @@ export default class implements Command {
             buildCommandResultEmbed({
               successful: true,
               message: `New Observe consecutive timeout limit has been set to \`${limit}\``,
+            }),
+          ],
+          ephemeral: true,
+        });
+
+        break;
+      }
+
+      case 'timeouts-till-notify': {
+        const amount = interaction.options.getInteger('amount')!;
+
+        await this.settingsService.updateSettings(interaction.guildId!, {
+          timeoutsTillNotify: amount,
+        });
+
+        await interaction.reply({
+          embeds: [
+            buildCommandResultEmbed({
+              successful: true,
+              message: `User will now get notified when their Observes hit \`${amount}\` cumulative timeouts!`,
             }),
           ],
           ephemeral: true,
