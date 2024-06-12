@@ -51,7 +51,7 @@ export default class implements Command {
   ): Promise<void> {
     const name = interaction.options.getString('name');
     const activeOnly = interaction.options.getBoolean('active-only') ?? true;
-    const compact = interaction.options.getBoolean('compact') != null ?? true;
+    const compact = interaction.options.getBoolean('compact') ?? true;
 
     const observes = await this.observeManager.getObserves(interaction.user.id);
 
