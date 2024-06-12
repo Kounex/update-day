@@ -45,6 +45,7 @@ export default class {
             },
             data: {
               lastScrapeAtMS: Date.now(),
+              thumbnail: observe.thumbnail,
             },
           });
 
