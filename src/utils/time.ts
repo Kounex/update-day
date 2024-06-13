@@ -10,9 +10,35 @@ export const prettyTime = (seconds: number): string => {
     nMinutes -= nHours * 60;
   }
 
-  res += `${Math.round(nMinutes).toString().padStart(2, '0')}:${Math.round(nSeconds).toString().padStart(2, '0')}`;
+  res += `${Math.round(nMinutes).toString().padStart(2, '0')}:${Math.round(
+    nSeconds
+  )
+    .toString()
+    .padStart(2, '0')}`;
 
   return res;
 };
 
-export const parseTime = (str: string): number => str.split(':').reduce((acc, time) => (60 * acc) + parseInt(time, 10), 0);
+export const parseTime = (str: string): number =>
+  str.split(':').reduce((acc, time) => 60 * acc + parseInt(time, 10), 0);
+
+export const prettyDateTime = (ms: number): string => {
+  // Create a new Date object from the timestamp
+  const date = new Date(ms);
+
+  // Options for the date and time formatting
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  };
+
+  // Use the toLocaleDateString method with 'de-DE' locale for German format
+  const formattedDate = date.toLocaleDateString('de-DE', options);
+
+  return formattedDate;
+};

@@ -2,6 +2,7 @@ import { Settings } from '@prisma/client';
 import { ColorResolvable, EmbedBuilder } from 'discord.js';
 import { CommandResult } from '../types/interfaces/command-result.js';
 import { Observe, ScrapeInterval } from '../types/models/observe.js';
+import { prettyDateTime } from './time.js';
 
 export interface EmbedOptions {
   description?: string;
@@ -111,7 +112,9 @@ export const buildObserveEmbed = (
     .setDescription(options?.description ?? null)
     .addFields(observeFields([observe], false))
     .setFooter({
-      text: `last updated: ${lastUpdated == 0 ? '-' : lastUpdated}`,
+      text: `last updated: ${
+        lastUpdated == 0 ? '-' : prettyDateTime(lastUpdated)
+      }`,
     });
 
   if (observe.thumbnail != null) {
@@ -138,6 +141,15 @@ function observeFields(observes: Observe[], compact: boolean = false) {
       value: observes.reduce(
         (sum, observe) =>
           `${sum}${ScrapeInterval.enumText(observe.scrapeInterval.type)}\n`,
+        ''
+      ),
+      inline: true,
+    },
+    {
+      name: 'Last Scrape',
+      value: observes.reduce(
+        (sum, observe) =>
+          `${sum}${prettyDateTime(Number(observe.lastScrapeAtMS))}\n`,
         ''
       ),
       inline: true,
