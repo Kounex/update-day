@@ -7,6 +7,7 @@ import {
 import { Observe } from '../types/models/observe.js';
 import { prisma } from '../utils/db.js';
 
+import { log } from 'console';
 import { inject } from 'inversify';
 import { TYPES } from '../types.js';
 import SettingsService from './settings.js';
@@ -37,23 +38,22 @@ export default class ScrapeService {
       return new ScrapeResult(observe, ScrapeResultType.Timeout);
     }
 
-    try {
-      /// Try to get thumbnail
-      const thumbnail = await page.evaluate(() => {
-        // Get all link elements in the head
-        const linkElements = document.querySelectorAll(
-          'head link[rel="icon"][type^="image/"]'
-        );
-        // Return the href attribute of the first matching link element, if exists
-        return linkElements.length
-          ? linkElements[0].getAttribute('href')
-          : null;
-      });
+    const links = await page.$$('head [type^="image/"]');
+
+    if (links.length > 0) {
+      const thumbnail = await links[0].evaluate((el) =>
+        el.getAttribute('href')
+      );
+
       if (thumbnail != null) {
-        const url = new URL(thumbnail);
-        observe.thumbnail = `${url.origin}${url.pathname}`;
+        try {
+          const url = new URL(`https://${thumbnail.split('//').join('')}`);
+          observe.thumbnail = `${url.origin}${url.pathname}`;
+        } catch (_) {
+          log(_);
+        }
       }
-    } catch (_) {}
+    }
 
     const element = await page.$(observe.cssSelector);
 
@@ -93,6 +93,7 @@ export default class ScrapeService {
   private async handleFoundChange(observe: Observe): Promise<ScrapeResult> {
     await prisma.observe.updateMany({
       where: {
+        guildId: observe.guildId,
         userId: observe.userId,
         name: observe.name,
       },

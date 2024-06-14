@@ -149,7 +149,11 @@ function observeFields(observes: Observe[], compact: boolean = false) {
       name: 'Last Scrape',
       value: observes.reduce(
         (sum, observe) =>
-          `${sum}${prettyDateTime(Number(observe.lastScrapeAtMS))}\n`,
+          `${sum}${
+            Number(observe.lastScrapeAtMS) > 0
+              ? prettyDateTime(Number(observe.lastScrapeAtMS))
+              : '-'
+          }\n`,
         ''
       ),
       inline: true,

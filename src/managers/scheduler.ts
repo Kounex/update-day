@@ -14,8 +14,6 @@ import ObserveManager from './observe.js';
 
 @injectable()
 export default class {
-  private _activeObserves: Observe[] = [];
-
   constructor(
     @inject(TYPES.Client) private readonly client: Client,
     @inject(TYPES.Managers.Observe)
@@ -32,25 +30,24 @@ export default class {
 
   private async checkObserves(): Promise<void> {
     for (const observe of await this.observeManager.getObserves()) {
-      this._activeObserves.push(observe);
       if (
         Number(observe.lastScrapeAtMS) + observe.scrapeInterval.durationMS <
         Date.now()
       ) {
         this.scrapeService.observe(observe).then(async (scrapeResult) => {
-          prisma.observe.updateMany({
-            where: {
-              userId: observe.userId,
-              name: observe.name,
-            },
-            data: {
-              lastScrapeAtMS: Date.now(),
-              thumbnail: observe.thumbnail,
-            },
-          });
-
-          this.handleScrapeResult(observe, scrapeResult);
-          this._activeObserves.splice(this._activeObserves.indexOf(observe), 1);
+          await prisma.observe
+            .updateMany({
+              where: {
+                guildId: observe.guildId,
+                userId: observe.userId,
+                name: observe.name,
+              },
+              data: {
+                lastScrapeAtMS: Date.now(),
+                thumbnail: observe.thumbnail,
+              },
+            })
+            .then((_) => this.handleScrapeResult(observe, scrapeResult));
         });
       }
     }
@@ -61,22 +58,24 @@ export default class {
     scrapeResult: ScrapeResult
   ): Promise<void> {
     if (scrapeResult.type == ScrapeResultType.Timeout) {
-      prisma.observe.updateMany({
-        where: {
-          userId: observe.userId,
-          name: observe.name,
-        },
-        data: {
-          consecutiveTimeouts: observe.consecutiveTimeouts + 1,
-          timeouts: observe.timeouts + 1,
-        },
-      });
-
-      this.handleTimeoutScenarios(observe);
+      prisma.observe
+        .updateMany({
+          where: {
+            guildId: observe.guildId,
+            userId: observe.userId,
+            name: observe.name,
+          },
+          data: {
+            consecutiveTimeouts: observe.consecutiveTimeouts + 1,
+            timeouts: observe.timeouts + 1,
+          },
+        })
+        .then((_) => this.handleTimeoutScenarios(observe));
     } else {
       if (observe.consecutiveTimeouts != 0) {
-        prisma.observe.updateMany({
+        await prisma.observe.updateMany({
           where: {
+            guildId: observe.guildId,
             userId: observe.userId,
             name: observe.name,
           },
@@ -103,8 +102,8 @@ export default class {
       if (observe.consecutiveTimeouts == 0 && settings.notifyOnFirstTimeout) {
         this.client.users.fetch(observe.userId).then((user) =>
           user.send({
-            content: `While trying to observe \`${observe.name}\` on \`${observe.url}\`, we ran into a timeout. Check if the page itself still works and adjust if necessary. The bot will try again until it ran into a timeout 3 times consecutively where it will deactivate this Observe!`,
-            embeds: [buildObserveEmbed(observe, { color: 'DarkOrange' })],
+            content: `While trying to observe \`${observe.name}\` on \`${observe.url}\`, we ran into a timeout. Check if the page itself still works and adjust if necessary. The bot will try again until it ran into a timeout \`${settings.consecutiveTimeoutsLimit}\` times consecutively where it will deactivate this Observe!`,
+            embeds: [buildObserveEmbed(observe, { color: 'Orange' })],
           })
         );
       } else if (
@@ -121,7 +120,7 @@ export default class {
         this.client.users.fetch(observe.userId).then((user) =>
           user.send({
             content: `Your Observe \`${observe.name}\` on \`${observe.url}\`has reached a total of ${settings.timeoutsTillNotify} timeouts. Make sure the URL is working. It might just temporarily (or sometimes) response slow which results in such a timeout. The bot might also have a too tight timeout window which an admin of this server could increase. Nonetheless: a timeout means no actual scraping has been done and depending on your scrape interval, this could leave huge time gaps where we don't know if one of your Observes might have changed. Any form of action is therefore advised!`,
-            embeds: [buildObserveEmbed(observe, { color: 'DarkRed' })],
+            embeds: [buildObserveEmbed(observe, { color: 'Orange' })],
           })
         );
       }

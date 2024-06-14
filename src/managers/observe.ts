@@ -126,6 +126,7 @@ export default class {
 
       const { count } = await prisma.observe.updateMany({
         where: {
+          guildId: newObserve.guildId,
           userId: newObserve.userId,
           name: name,
         },
