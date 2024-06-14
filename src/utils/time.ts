@@ -35,6 +35,7 @@ export const prettyDateTime = (ms: number): string => {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
+    timeZone: 'Europe/Berlin',
   };
 
   // Use the toLocaleDateString method with 'de-DE' locale for German format

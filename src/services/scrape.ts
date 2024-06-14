@@ -7,7 +7,6 @@ import {
 import { Observe } from '../types/models/observe.js';
 import { prisma } from '../utils/db.js';
 
-import { log } from 'console';
 import { inject } from 'inversify';
 import { TYPES } from '../types.js';
 import SettingsService from './settings.js';
@@ -27,17 +26,6 @@ export default class ScrapeService {
 
     await page.goto(observe.url);
 
-    // var element;
-    try {
-      await page.waitForNetworkIdle({ timeout: settings.timeout * 1000 });
-    } catch (_) {
-      await browser.close();
-      if (!!initial) {
-        return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
-      }
-      return new ScrapeResult(observe, ScrapeResultType.Timeout);
-    }
-
     const links = await page.$$('head [type^="image/"]');
 
     if (links.length > 0) {
@@ -49,20 +37,31 @@ export default class ScrapeService {
         try {
           const url = new URL(`https://${thumbnail.split('//').join('')}`);
           observe.thumbnail = `${url.origin}${url.pathname}`;
-        } catch (_) {
-          log(_);
-        }
+        } catch (_) {}
       }
     }
 
-    const element = await page.$(observe.cssSelector);
-
-    if (element == null) {
-      return this.handleFoundChange(observe);
+    var element;
+    try {
+      element = await page.waitForSelector(observe.cssSelector, {
+        timeout: settings.timeout * 1_000,
+      });
+    } catch (_) {
+      try {
+        await page.waitForNetworkIdle({ timeout: 1_000 });
+        await browser.close();
+        if (!!initial) {
+          return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
+        }
+        return new ScrapeResult(observe, ScrapeResultType.Change);
+      } catch (_) {
+        await browser.close();
+        return new ScrapeResult(observe, ScrapeResultType.Timeout);
+      }
     }
 
     const domElementProperty = observe.domElementProperty;
-    const text = await element.evaluate(
+    const text = await element!.evaluate(
       (el, domElementProperty) =>
         domElementProperty == null
           ? el.textContent
