@@ -24,6 +24,7 @@ model Observe {
   consecutiveTimeouts   Int       @default(0)
   timeouts              Int       @default(0)
   thumbnail             String?
+  amountScraped         Int       @default(0)
 
   @@unique([guildId, userId, name])
 }

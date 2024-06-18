@@ -35,7 +35,7 @@ export default class {
         Date.now()
       ) {
         this.scrapeService.observe(observe).then(async (scrapeResult) => {
-          await prisma.observe
+          prisma.observe
             .updateMany({
               where: {
                 guildId: observe.guildId,
@@ -45,6 +45,7 @@ export default class {
               data: {
                 lastScrapeAtMS: Date.now(),
                 thumbnail: observe.thumbnail,
+                amountScraped: observe.amountScraped + 1,
               },
             })
             .then((_) => this.handleScrapeResult(observe, scrapeResult));
