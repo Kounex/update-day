@@ -1,6 +1,6 @@
-import Config from '../config';
+import Config from '../config.js';
 import container from '../inversify.config.js';
-import { TYPES } from '../types';
+import { TYPES } from '../types.js';
 
 export const prettyTime = (seconds: number): string => {
   const nSeconds = seconds % 60;
