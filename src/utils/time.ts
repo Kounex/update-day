@@ -1,3 +1,7 @@
+import Config from '../config';
+import container from '../inversify.config.js';
+import { TYPES } from '../types';
+
 export const prettyTime = (seconds: number): string => {
   const nSeconds = seconds % 60;
   let nMinutes = Math.floor(seconds / 60);
@@ -23,6 +27,8 @@ export const parseTime = (str: string): number =>
   str.split(':').reduce((acc, time) => 60 * acc + parseInt(time, 10), 0);
 
 export const prettyDateTime = (ms: number): string => {
+  const config = container.get<Config>(TYPES.Config);
+
   // Create a new Date object from the timestamp
   const date = new Date(ms);
 
@@ -35,7 +41,7 @@ export const prettyDateTime = (ms: number): string => {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-    timeZone: 'Europe/Berlin',
+    timeZone: config.TIMEZONE,
   };
 
   // Use the toLocaleDateString method with 'de-DE' locale for German format

@@ -17,6 +17,7 @@ const CONFIG_MAP = {
   BOT_ACTIVITY: process.env.BOT_ACTIVITY ?? 'Observing 👀',
   BOT_ACTIVITY_TYPE: process.env.BOT_ACTIVITY_TYPE ?? 'Custom',
   BOT_STATUS: process.env.BOT_STATUS ?? 'online',
+  TIMEZONE: process.env.TIMEZONE ?? 'Europe/Berlin',
 } as const;
 
 @injectable()
@@ -27,6 +28,7 @@ export default class Config {
   readonly BOT_ACTIVITY!: string;
   readonly BOT_ACTIVITY_TYPE!: ActivityType;
   readonly BOT_STATUS!: PresenceStatusData;
+  readonly TIMEZONE!: string;
 
   constructor() {
     for (const [key, value] of Object.entries(CONFIG_MAP)) {

@@ -196,6 +196,14 @@ function observeFields(observes: Observe[], compact: boolean = false) {
         inline: true,
       },
       {
+        name: 'Amount Scrapes',
+        value: observes.reduce(
+          (sum, observe) => `${sum}${observe.amountScraped}\n`,
+          ''
+        ),
+        inline: true,
+      },
+      {
         name: 'Timeouts',
         value: observes.reduce(
           (sum, observe) => `${sum}${observe.timeouts}\n`,
