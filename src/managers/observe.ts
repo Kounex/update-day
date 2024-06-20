@@ -117,7 +117,8 @@ export default class {
       currentObserve.lastScrapeAtMS,
       currentObserve.consecutiveTimeouts,
       currentObserve.timeouts,
-      currentObserve.thumbnail
+      currentObserve.thumbnail,
+      currentObserve.amountScraped
     );
 
     if (newObserve instanceof Observe) {
