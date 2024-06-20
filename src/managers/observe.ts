@@ -49,7 +49,7 @@ export default class {
     if (observes.some((userObserve) => userObserve.name == observe.name)) {
       return {
         successful: false,
-        message: `You already have an Observe with the name \`${observe.name}\`! Check your observes with \`/list\` and choose another name if you still want to add a new one!`,
+        message: `You already have an Observe with the name \`${observe.name}\`! Check your Observes with \`/list\` and choose another name if you still want to add a new one!`,
       };
     }
 
@@ -81,7 +81,7 @@ export default class {
     if (!currentObserve) {
       return {
         successful: false,
-        message: `No Observe of yours found with the name \`${name}\`! Check your observes with \`/list\` and choose another name if you still want to edit an observe of yours!`,
+        message: `No Observe of yours found with the name \`${name}\`! Check your Observes with \`/list\` and choose another name if you still want to edit an Observe of yours!`,
       };
     }
 
@@ -97,7 +97,7 @@ export default class {
     ) {
       return {
         successful: false,
-        message: `You already have an Observe with the name \`${editedObserve.name}\`! Check your observes with \`/list\` and choose another name if you still want to edit your observe!`,
+        message: `You already have an Observe with the name \`${editedObserve.name}\`! Check your Observes with \`/list\` and choose another name if you still want to edit your Observe!`,
       };
     }
 
