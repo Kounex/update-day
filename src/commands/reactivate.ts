@@ -17,7 +17,7 @@ export default class implements Command {
     .addStringOption((option) =>
       option
         .setName('name')
-        .setDescription('Name of your observe to reactivate')
+        .setDescription('Name of your Observe to reactivate')
         .setAutocomplete(true)
         .setRequired(true)
     );

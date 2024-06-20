@@ -59,7 +59,7 @@ export default class implements Command {
       option
         .setName('scrape-interval')
         .setDescription(
-          'Set the interval the bot should scrape your observe, Hourly is the default'
+          'Set the interval the bot should scrape your Observe, Hourly is the default'
         )
         .setChoices(
           ScrapeInterval.enumValues.map((type) => {
@@ -82,7 +82,7 @@ export default class implements Command {
       option
         .setName('keep-active')
         .setDescription(
-          'If you want to keep the observe active once it found a change, false by default'
+          'If you want to keep the Observe active once it found a change, false by default'
         )
     );
 

@@ -22,7 +22,7 @@ export default class implements Command {
       option
         .setName('name')
         .setDescription(
-          'If you only want to see a specific observe, will show all by default'
+          'If you only want to see a specific Observe, will show all by default'
         )
         .setAutocomplete(true)
     )
@@ -30,14 +30,14 @@ export default class implements Command {
       option
         .setName('active-only')
         .setDescription(
-          'If you only want to see your active observes, true by default'
+          'If you only want to see your active Observes, true by default'
         )
     )
     .addBooleanOption((option) =>
       option
         .setName('compact')
         .setDescription(
-          'If you want to see your observes in a compact list, true by default'
+          'If you want to see your Observes in a compact list, true by default'
         )
     );
 
@@ -73,7 +73,7 @@ export default class implements Command {
           embeds: [
             buildCommandResultEmbed({
               successful: false,
-              message: `You don't have an observe with the name \`${name}\`! Make use of autocomplete to choose an existing Observe or take a look at all your Observes by using this command without providing a name.`,
+              message: `You don't have an Observe with the name \`${name}\`! Make use of autocomplete to choose an existing Observe or take a look at all your Observes by using this command without providing a name.`,
             }),
           ],
           ephemeral: true,

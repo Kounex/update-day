@@ -25,7 +25,7 @@ export default class implements Command {
       option
         .setName('url')
         .setDescription(
-          'Website URL to observe | e.g. https://www.lttstore.com/products/screwdriver-t-shirt'
+          'Website URL to Observe | e.g. https://www.lttstore.com/products/screwdriver-t-shirt'
         )
         .setRequired(true)
     )
@@ -47,7 +47,7 @@ export default class implements Command {
       option
         .setName('scrape-interval')
         .setDescription(
-          'Set the interval the bot should scrape your observe | Hourly is the default'
+          'Set the interval the bot should scrape your Observe | Hourly is the default'
         )
         .setChoices(
           ScrapeInterval.enumValues.map((type) => {
@@ -70,7 +70,7 @@ export default class implements Command {
       option
         .setName('keep-active')
         .setDescription(
-          'If you want to deactivate the observe once it found a change, true by default'
+          'If you want to deactivate the Observe once it found a change, true by default'
         )
     );
 

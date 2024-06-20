@@ -89,7 +89,7 @@ export default class implements Command {
         embeds: [
           buildCommandResultEmbed({
             successful: false,
-            message: `Couldn't find an observe of yours with the name ${name}. Make use of the autocorrect feature of this command or double check with \`/list\`!`,
+            message: `Couldn't find an Observe of yours with the name ${name}. Make use of the autocorrect feature of this command or double check with \`/list\`!`,
           }),
         ],
         ephemeral: true,

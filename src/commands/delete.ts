@@ -17,7 +17,7 @@ export default class implements Command {
     .addStringOption((option) =>
       option
         .setName('name')
-        .setDescription('Name of your observe to delete')
+        .setDescription('Name of your Observe to delete')
         .setAutocomplete(true)
         .setRequired(true)
     );

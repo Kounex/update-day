@@ -49,7 +49,7 @@ export default class {
     if (observes.some((userObserve) => userObserve.name == observe.name)) {
       return {
         successful: false,
-        message: `You already have an observe with the name \`${observe.name}\`! Check your observes with \`/list\` and choose another name if you still want to add a new one!`,
+        message: `You already have an Observe with the name \`${observe.name}\`! Check your observes with \`/list\` and choose another name if you still want to add a new one!`,
       };
     }
 
@@ -81,7 +81,7 @@ export default class {
     if (!currentObserve) {
       return {
         successful: false,
-        message: `No observe of yours found with the name \`${name}\`! Check your observes with \`/list\` and choose another name if you still want to edit an observe of yours!`,
+        message: `No Observe of yours found with the name \`${name}\`! Check your observes with \`/list\` and choose another name if you still want to edit an observe of yours!`,
       };
     }
 
@@ -97,7 +97,7 @@ export default class {
     ) {
       return {
         successful: false,
-        message: `You already have an observe with the name \`${editedObserve.name}\`! Check your observes with \`/list\` and choose another name if you still want to edit your observe!`,
+        message: `You already have an Observe with the name \`${editedObserve.name}\`! Check your observes with \`/list\` and choose another name if you still want to edit your observe!`,
       };
     }
 
@@ -122,9 +122,6 @@ export default class {
     );
 
     if (newObserve instanceof Observe) {
-      // Trying to find the original observe, delete it and add the new (edited) one.
-      // If none has been returned, none has been deleted, so abort edit
-
       const { count } = await prisma.observe.updateMany({
         where: {
           guildId: newObserve.guildId,
@@ -138,7 +135,7 @@ export default class {
         return {
           successful: false,
           message:
-            'Could not edit any of your existing observes! Make sure your input is correct!',
+            'Could not edit any of your existing Observes! Make sure your input is correct!',
         };
       }
 
@@ -169,7 +166,7 @@ export default class {
     if (count < 1) {
       return {
         successful: false,
-        message: `Did not find a observe to delete with the name \`${name}\`. Make sure it exists with \`/list\`.`,
+        message: `Did not find a Observe to delete with the name \`${name}\`. Make sure it exists with \`/list\`.`,
       };
     }
 
@@ -199,7 +196,7 @@ export default class {
     if (count < 1) {
       return {
         successful: false,
-        message: `Did not find a observe to reactivate with the name \`${name}\`. Make sure it exists and is currently not active with \`/list\`.`,
+        message: `Did not find a Observe to reactivate with the name \`${name}\`. Make sure it exists and is currently not active with \`/list\`.`,
       };
     }
 

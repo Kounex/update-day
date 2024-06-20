@@ -90,7 +90,7 @@ export default class {
         this.client.users.fetch(observe.userId).then((user) =>
           user.send({
             content:
-              'A change has been found for your following observe - check quickly!',
+              'A change has been found for your following Observe - check quickly!',
             embeds: [buildObserveEmbed(observe)],
           })
         );
@@ -103,7 +103,7 @@ export default class {
       if (observe.consecutiveTimeouts == 0 && settings.notifyOnFirstTimeout) {
         this.client.users.fetch(observe.userId).then((user) =>
           user.send({
-            content: `While trying to observe \`${observe.name}\` on \`${observe.url}\`, we ran into a timeout. Check if the page itself still works and adjust if necessary. The bot will try again until it ran into a timeout \`${settings.consecutiveTimeoutsLimit}\` times consecutively where it will deactivate this Observe!`,
+            content: `While trying to Observe \`${observe.name}\` on \`${observe.url}\`, we ran into a timeout. Check if the page itself still works and adjust if necessary. The bot will try again until it ran into a timeout \`${settings.consecutiveTimeoutsLimit}\` times consecutively where it will deactivate this Observe!`,
             embeds: [buildObserveEmbed(observe, { color: 'Orange' })],
           })
         );
