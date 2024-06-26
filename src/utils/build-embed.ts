@@ -118,7 +118,9 @@ export const buildObserveEmbed = (
     });
 
   if (observe.thumbnail != null) {
-    message.setThumbnail(observe.thumbnail);
+    try {
+      message.setThumbnail(observe.thumbnail);
+    } catch (_) {}
   }
 
   return message;

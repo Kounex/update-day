@@ -29,14 +29,19 @@ export default class ScrapeService {
     const links = await page.$$('head [type^="image/"]');
 
     if (links.length > 0) {
-      const thumbnail = await links[0].evaluate((el) =>
-        el.getAttribute('href')
-      );
+      var thumbnail = await links[0].evaluate((el) => el.getAttribute('href'));
 
       if (thumbnail != null) {
         try {
-          const url = new URL(`https://${thumbnail.split('//').join('')}`);
-          observe.thumbnail = `${url.origin}${url.pathname}`;
+          var url: URL;
+          const observeURL = new URL(observe.url);
+          thumbnail = thumbnail.split('//').join('');
+          if (thumbnail.startsWith('/')) {
+            url = new URL(`${observeURL.origin}${thumbnail}`);
+          } else {
+            url = new URL(`https://${thumbnail}`);
+          }
+          observe.thumbnail = `${observeURL.origin}${url.pathname}`;
         } catch (_) {}
       }
     }
