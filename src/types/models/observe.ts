@@ -202,6 +202,14 @@ export class Observe {
     }${this.domElementProperty != null ? '\n' + this.name : ''}\n`;
   }
 
+  public equals(observe: Observe) {
+    return (
+      this.guildId == observe.guildId &&
+      this.userId == observe.userId &&
+      this.name == observe.name
+    );
+  }
+
   private static isValidCSSSelector(selector: string): boolean {
     try {
       parse(selector);

@@ -33,7 +33,7 @@ export default class {
   private async checkObserves(): Promise<void> {
     for (const observe of await this.observeManager.getObserves()) {
       if (
-        !this._inObservation.some((inObserve) => inObserve == observe) &&
+        !this._inObservation.some((inObserve) => inObserve.equals(observe)) &&
         Number(observe.lastScrapeAtMS) + observe.scrapeInterval.durationMS <
           Date.now()
       ) {
@@ -114,7 +114,11 @@ export default class {
       }
     }
 
-    this._inObservation.splice(this._inObservation.indexOf(observe));
+    this._inObservation.splice(
+      this._inObservation.findIndex((inObservation) =>
+        inObservation.equals(observe)
+      )
+    );
   }
 
   private async handleTimeoutScenarios(observe: Observe): Promise<void> {
