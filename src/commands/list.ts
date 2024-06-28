@@ -53,7 +53,10 @@ export default class implements Command {
     const activeOnly = interaction.options.getBoolean('active-only') ?? true;
     const compact = interaction.options.getBoolean('compact') ?? true;
 
-    const observes = await this.observeManager.getObserves(interaction.user.id);
+    const observes = await this.observeManager.getObserves({
+      guildId: interaction.guildId!,
+      userId: interaction.user.id,
+    });
 
     if (name == null) {
       await interaction.reply({
@@ -87,10 +90,10 @@ export default class implements Command {
   ): Promise<void> {
     const name = interaction.options.getString('name');
     const focusedOption = interaction.options.getFocused(true);
-    var observes = await this.observeManager.getObserves(
-      interaction.guildId!,
-      interaction.user.id
-    );
+    var observes = await this.observeManager.getObserves({
+      guildId: interaction.guildId!,
+      userId: interaction.user.id,
+    });
 
     switch (focusedOption.name) {
       case 'name': {

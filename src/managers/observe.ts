@@ -20,18 +20,19 @@ export default class {
     private readonly settingsService: SettingsService
   ) {}
 
-  public async getObserves(
-    guildId?: string,
-    userId?: string
-  ): Promise<Observe[]> {
+  public async getObserves(options: {
+    guildId?: string;
+    userId?: string;
+    active?: boolean;
+  }): Promise<Observe[]> {
     return (
-      await prisma.observe.findMany(
-        !!userId
-          ? {
-              where: { guildId, userId },
-            }
-          : undefined
-      )
+      await prisma.observe.findMany({
+        where: {
+          guildId: options.guildId,
+          userId: options.userId,
+          active: options.active,
+        },
+      })
     ).map((observe) => Observe.fromPrisma(observe));
   }
 
@@ -69,10 +70,10 @@ export default class {
     name: string,
     editedObserve: Observe
   ): Promise<CommandResult> {
-    const observes = await this.getObserves(
-      editedObserve.guildId,
-      editedObserve.userId
-    );
+    const observes = await this.getObserves({
+      guildId: editedObserve.guildId,
+      userId: editedObserve.userId,
+    });
 
     // Find the [Observe] the user is trying to edit
     const currentObserve = observes.find((observe) => observe.name == name);
@@ -211,7 +212,7 @@ export default class {
     userId: string
   ): Promise<CheckResult> {
     const settings = await this.settingsService.getSettings(guildId);
-    const observes = await this.getObserves(guildId);
+    const observes = await this.getObserves({ guildId: guildId });
 
     if (observes.length >= settings.guildObserveLimit) {
       return {

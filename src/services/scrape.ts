@@ -5,7 +5,6 @@ import {
   ScrapeResultType,
 } from '../types/classes/scrape-result.js';
 import { Observe } from '../types/models/observe.js';
-import { prisma } from '../utils/db.js';
 
 import { inject } from 'inversify';
 import { TYPES } from '../types.js';
@@ -88,24 +87,9 @@ export default class ScrapeService {
         return new ScrapeResult(observe, ScrapeResultType.TextNotFound);
       }
 
-      return this.handleFoundChange(observe);
+      return new ScrapeResult(observe, ScrapeResultType.Change);
     }
 
     return new ScrapeResult(observe, ScrapeResultType.NoChange);
-  }
-
-  private async handleFoundChange(observe: Observe): Promise<ScrapeResult> {
-    await prisma.observe.updateMany({
-      where: {
-        guildId: observe.guildId,
-        userId: observe.userId,
-        name: observe.name,
-      },
-      data: {
-        active: observe.keepActive,
-      },
-    });
-
-    return new ScrapeResult(observe, ScrapeResultType.Change);
   }
 }

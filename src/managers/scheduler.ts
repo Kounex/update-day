@@ -31,7 +31,9 @@ export default class {
   }
 
   private async checkObserves(): Promise<void> {
-    for (const observe of await this.observeManager.getObserves()) {
+    for (const observe of await this.observeManager.getObserves({
+      active: true,
+    })) {
       if (
         !this._inObservation.some((inObserve) => inObserve.equals(observe)) &&
         Number(observe.lastScrapeAtMS) + observe.scrapeInterval.durationMS <
@@ -99,7 +101,7 @@ export default class {
               name: observe.name,
             },
             data: {
-              active: false,
+              active: observe.keepActive,
             },
           })
           .then((_) =>

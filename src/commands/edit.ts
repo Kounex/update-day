@@ -144,10 +144,10 @@ export default class implements Command {
     interaction: AutocompleteInteraction
   ): Promise<void> {
     var options: string[] = [];
-    const observes = await this.observeManager.getObserves(
-      interaction.guildId!,
-      interaction.user.id
-    );
+    const observes = await this.observeManager.getObserves({
+      guildId: interaction.guildId!,
+      userId: interaction.user.id,
+    });
     const currentName = interaction.options.getString('current-name');
     const focusedOption = interaction.options.getFocused(true);
 
