@@ -14,6 +14,8 @@ import ObserveManager from './observe.js';
 
 @injectable()
 export default class {
+  private _inObservation: Observe[] = [];
+
   constructor(
     @inject(TYPES.Client) private readonly client: Client,
     @inject(TYPES.Managers.Observe)
@@ -31,9 +33,11 @@ export default class {
   private async checkObserves(): Promise<void> {
     for (const observe of await this.observeManager.getObserves()) {
       if (
+        !this._inObservation.some((inObserve) => inObserve == observe) &&
         Number(observe.lastScrapeAtMS) + observe.scrapeInterval.durationMS <
-        Date.now()
+          Date.now()
       ) {
+        this._inObservation.push(observe);
         this.scrapeService.observe(observe).then(async (scrapeResult) => {
           prisma.observe
             .updateMany({
@@ -87,15 +91,30 @@ export default class {
       }
 
       if (scrapeResult.type == ScrapeResultType.Change) {
-        this.client.users.fetch(observe.userId).then((user) =>
-          user.send({
-            content:
-              'A change has been found for your following Observe - check quickly!',
-            embeds: [buildObserveEmbed(observe)],
+        prisma.observe
+          .updateMany({
+            where: {
+              guildId: observe.guildId,
+              userId: observe.userId,
+              name: observe.name,
+            },
+            data: {
+              active: false,
+            },
           })
-        );
+          .then((_) =>
+            this.client.users.fetch(observe.userId).then((user) =>
+              user.send({
+                content:
+                  'A change has been found for your following Observe - check quickly!',
+                embeds: [buildObserveEmbed(observe)],
+              })
+            )
+          );
       }
     }
+
+    this._inObservation.splice(this._inObservation.indexOf(observe));
   }
 
   private async handleTimeoutScenarios(observe: Observe): Promise<void> {
