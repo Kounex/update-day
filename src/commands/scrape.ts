@@ -48,7 +48,7 @@ export default class implements Command {
     const observe = observes.find((userObserve) => userObserve.name == name);
 
     if (!!observe) {
-      interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ ephemeral: true });
 
       const scrapeResult = await this.scrapeService.observe(observe);
 

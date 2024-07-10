@@ -97,7 +97,7 @@ export default class implements Command {
     );
 
     if (observe instanceof Observe) {
-      interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ ephemeral: true });
 
       const result = await this.observeManager.addObserve(observe);
 

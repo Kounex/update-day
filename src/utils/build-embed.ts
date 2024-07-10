@@ -1,5 +1,5 @@
 import { Settings } from '@prisma/client';
-import { ColorResolvable, EmbedBuilder } from 'discord.js';
+import { Client, ColorResolvable, EmbedBuilder } from 'discord.js';
 import { CommandResult } from '../types/interfaces/command-result.js';
 import { Observe, ScrapeInterval } from '../types/models/observe.js';
 import { prettyDateTime } from './time.js';
@@ -122,6 +122,88 @@ export const buildObserveEmbed = (
       message.setThumbnail(observe.thumbnail);
     } catch (_) {}
   }
+
+  return message;
+};
+
+export const buildObserveOverview = async (
+  observes: Observe[],
+  activeOnly: boolean,
+  client: Client
+): Promise<EmbedBuilder> => {
+  const message = new EmbedBuilder();
+  const uniqueUserIds = new Set(observes.map((observe) => observe.userId));
+  const userIdNameMap = new Map<string, string>();
+
+  for (const userId of uniqueUserIds) {
+    const user = await client.users.fetch(userId);
+    userIdNameMap.set(userId, user.displayName);
+  }
+
+  observes.sort(
+    (ob1, ob2) =>
+      Number(ob1.active) - Number(ob2.active) ||
+      userIdNameMap
+        .get(ob1.userId)!
+        .localeCompare(userIdNameMap.get(ob2.userId)!)
+  );
+
+  message
+    .setTitle('Observes Overview')
+    .setColor('DarkGreen')
+    .setDescription(
+      `All ${activeOnly ? 'active' : ''} Observes managed by this bot`
+    )
+    .addFields(
+      {
+        name: 'User',
+        value: observes.reduce(
+          (sum, observe) => `${sum}${userIdNameMap.get(observe.userId)!}\n`,
+          ''
+        ),
+        inline: true,
+      },
+      {
+        name: 'Name',
+        value: observes.reduce((sum, observe) => `${sum}${observe.name}\n`, ''),
+        inline: true,
+      },
+      {
+        name: 'URL',
+        value: observes.reduce((sum, observe) => `${sum}${observe.url}\n`, ''),
+        inline: true,
+      },
+      {
+        name: 'Active',
+        value: observes.reduce(
+          (sum, observe) => `${sum}${observe.active}\n`,
+          ''
+        ),
+        inline: true,
+      },
+      {
+        name: 'Amount Scraped',
+        value: observes.reduce(
+          (sum, observe) => `${sum}${observe.amountScraped}\n`,
+          ''
+        ),
+        inline: true,
+      },
+      {
+        name: 'Created At',
+        value: observes.reduce(
+          (sum, observe) =>
+            `${sum}${prettyDateTime(Number(observe.createdAtMS))}\n`,
+          ''
+        ),
+        inline: true,
+      }
+    )
+    .setFooter({
+      text: `${observes.length} ${activeOnly ? 'active' : ''} Observes, ${
+        uniqueUserIds.size
+      } users`,
+    });
 
   return message;
 };
