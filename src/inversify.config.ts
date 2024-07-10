@@ -14,6 +14,7 @@ import ScrapeService from './services/scrape.js';
 import SettingsService from './services/settings.js';
 
 // Commands
+import Admin from './commands/admin.js';
 import Command from './commands/command.js';
 import Delete from './commands/delete.js';
 import Edit from './commands/edit.js';
@@ -50,7 +51,7 @@ container.bind(TYPES.Services.Scrape).to(ScrapeService).inSingletonScope();
 container.bind(TYPES.Services.Settings).to(SettingsService).inSingletonScope();
 
 // Commands
-[Delete, Edit, List, Observe, Reactivate, Scrape, Settings].forEach(
+[Admin, Delete, Edit, List, Observe, Reactivate, Scrape, Settings].forEach(
   (command) => {
     container.bind<Command>(TYPES.Command).to(command).inSingletonScope();
   }
