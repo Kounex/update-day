@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1]
+
+### Fixed
+
+- `puppeteer.launch()` had no `--no-sandbox` flag, so Chrome crashed immediately in this container (missing sandbox privileges) - every single scrape was silently hitting this and surfacing as a generic timeout. This was breaking every Observe, on every site.
+- Some sites (this container's User-Agent literally contains `HeadlessChrome`) block requests from an obviously-automated browser - now presented as regular desktop Chrome (same bundled build, just without the giveaway tag).
+- Pages using CSS `content-visibility: auto` (a real, increasingly common perf optimization) render as empty text until scrolled into view - the target element/scope is now scrolled into view before reading its text, same as a real visitor would encounter it.
+
 ## [0.11.0]
 
 ### Changed

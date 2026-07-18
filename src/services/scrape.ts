@@ -26,8 +26,28 @@ export default class ScrapeService {
     // even if navigation, scraping or an unexpected error blows up below.
     let browser: Browser | undefined;
     try {
-      browser = await puppeteer.launch();
+      // Chrome's own sandbox needs privileges (a working user-namespace/SUID
+      // setup) this container doesn't grant, so an unmodified launch()
+      // crashes immediately ("No usable sandbox!") - every single scrape
+      // was hitting this and surfacing as a generic timeout. --no-sandbox is
+      // the standard, Puppeteer-documented way to run Chrome in a container
+      // like this one, where the container itself (already a non-root,
+      // otherwise-unprivileged user) is the isolation boundary.
+      browser = await puppeteer.launch({ args: ['--no-sandbox'] });
       const page = await browser.newPage();
+
+      // Some sites (e.g. anything behind a CloudFront/WAF bot rule) block
+      // requests whose User-Agent literally contains "HeadlessChrome".
+      // Strip that tag so we present as the same Chrome build, just not
+      // flagged as automated - derived from the real bundled UA (not a
+      // hardcoded string) so it can't drift out of sync with the actual
+      // browser version and become a mismatched, more suspicious fingerprint.
+      await page.setUserAgent(
+        (await browser.userAgent()).replace('HeadlessChrome', 'Chrome')
+      );
+      // A default 800x600 viewport can trip a site's mobile breakpoint and
+      // serve a different (sometimes differently-structured) layout.
+      await page.setViewport({ width: 1366, height: 900 });
 
       try {
         // Transient network blips (DNS hiccups, connection resets) shouldn't
@@ -91,6 +111,16 @@ export default class ScrapeService {
           return new ScrapeResult(observe, ScrapeResultType.Timeout);
         }
       }
+
+      // Some sites mark sections `content-visibility: auto` (a real, common
+      // perf optimization) which skips layout/rendering for off-screen
+      // content until it scrolls into view - innerText reads as empty for
+      // such a section even though the text is present in the DOM. Scroll
+      // it into view first, same as a real visitor would, so it renders.
+      await scopeElement!.evaluate((el) =>
+        el.scrollIntoView({ block: 'center' })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 250));
 
       // innerText (not textContent) so this only sees text a visitor would
       // actually see rendered - hidden elements, <script>/<style> contents,
