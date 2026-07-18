@@ -33,7 +33,10 @@ export class ScrapeResult {
         return `Element with given CSS-Selector \`${this.observe.cssSelector}\` on website \`${this.observe.url}\` not found!`;
       }
       case ScrapeResultType.TextNotFound: {
-        return `Text \`${this.observe.currentText}\` not found for element with CSS-Selector \`${this.observe.cssSelector}\` on website \`${this.observe.url}\`!`;
+        const where = this.observe.cssSelector
+          ? `within \`${this.observe.cssSelector}\` `
+          : '';
+        return `Text \`${this.observe.watchText}\` not currently found ${where}on website \`${this.observe.url}\`! Make sure it's an exact match of what's shown on the page right now.`;
       }
       case ScrapeResultType.Timeout: {
         return `Your Observe \`${this.observe.name}\` on \`${this.observe.url}\`ran into a timeout!`;

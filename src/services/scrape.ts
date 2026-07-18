@@ -66,9 +66,16 @@ export default class ScrapeService {
         }
       }
 
-      let element;
+      // No selector means "the whole page" - most users just want to watch
+      // for a phrase disappearing without hunting for a precise, deeply
+      // nested unique selector. A selector (when given) only narrows the
+      // search area, e.g. to avoid a phrase that also shows up in a nav bar
+      // or on unrelated products elsewhere on the page.
+      const scopeSelector = observe.cssSelector ?? 'body';
+
+      let scopeElement;
       try {
-        element = await page.waitForSelector(observe.cssSelector, {
+        scopeElement = await page.waitForSelector(scopeSelector, {
           timeout: timeoutMS,
         });
       } catch (error) {
@@ -85,22 +92,20 @@ export default class ScrapeService {
         }
       }
 
-      const domElementProperty = observe.domElementProperty;
-      const text = await element!.evaluate(
-        (el, domElementProperty) =>
-          domElementProperty == null
-            ? el.textContent
-            : el.getAttribute(domElementProperty),
-        domElementProperty
+      // innerText (not textContent) so this only sees text a visitor would
+      // actually see rendered - hidden elements, <script>/<style> contents,
+      // etc. are excluded, which matters a lot once the scope is as broad
+      // as the whole page.
+      const text = await scopeElement!.evaluate(
+        (el) => (el as HTMLElement).innerText ?? el.textContent ?? ''
       );
 
-      if (
-        text == null ||
-        !text
-          .toLocaleLowerCase()
-          .trim()
-          .includes(observe.currentText.toLocaleLowerCase().trim())
-      ) {
+      const phraseStillPresent = text
+        .toLocaleLowerCase()
+        .trim()
+        .includes(observe.watchText.toLocaleLowerCase().trim());
+
+      if (!phraseStillPresent) {
         if (!!initial) {
           return new ScrapeResult(observe, ScrapeResultType.TextNotFound);
         }

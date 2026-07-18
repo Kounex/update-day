@@ -14,9 +14,8 @@ model Observe {
   updatedAtMS           BigInt    @default(0)
   name                  String
   url                   String
-  cssSelector           String
-  currentText           String
-  domElementProperty    String?
+  cssSelector           String?
+  watchText             String
   scrapeIntervalType    String    @default("Hourly")
   keepActive            Boolean   @default(false)
   active                Boolean   @default(true)

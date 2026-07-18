@@ -75,9 +75,8 @@ export class Observe {
     public readonly updatedAtMS: bigint,
     public readonly name: string,
     public readonly url: string,
-    public readonly cssSelector: string,
-    public readonly currentText: string,
-    public readonly domElementProperty: string | null,
+    public readonly cssSelector: string | null,
+    public readonly watchText: string,
     public readonly scrapeInterval: ScrapeInterval = new ScrapeInterval(
       ScrapeIntervalType.Hourly
     ),
@@ -97,10 +96,9 @@ export class Observe {
     updatedAtMS: number | bigint,
     name: string,
     url: string,
-    cssSelector: string,
-    currentText: string,
+    cssSelector: string | null | undefined,
+    watchText: string,
     scrapeInterval: string | ScrapeInterval | null,
-    domElementProperty?: string | null,
     keepActive: boolean = false,
     active: boolean = true,
     lastScrapeAtMS: number | bigint = BigInt(0),
@@ -116,10 +114,17 @@ export class Observe {
           'Not a valid URL - has comply with the `URL` spec in general and contain `http` / `https`!',
       };
     }
-    if (!this.isValidCSSSelector(cssSelector.trim())) {
+    const trimmedSelector = cssSelector?.trim();
+    if (!!trimmedSelector && !this.isValidCSSSelector(trimmedSelector)) {
       return {
         name: 'NotValidAttribute',
         message: 'Not a valid CSS-Selector!',
+      };
+    }
+    if (watchText.trim().length < 1) {
+      return {
+        name: 'NotValidAttribute',
+        message: 'Text to watch for must not be empty!',
       };
     }
 
@@ -130,9 +135,8 @@ export class Observe {
       BigInt(updatedAtMS),
       name.trim(),
       url.trim(),
-      cssSelector.trim(),
-      currentText.trim(),
-      domElementProperty?.trim() ?? null,
+      trimmedSelector || null,
+      watchText.trim(),
       scrapeInterval instanceof ScrapeInterval
         ? scrapeInterval
         : new ScrapeInterval(
@@ -159,8 +163,7 @@ export class Observe {
       observe.name,
       observe.url,
       observe.cssSelector,
-      observe.currentText,
-      observe.domElementProperty,
+      observe.watchText,
       new ScrapeInterval(ScrapeInterval.toEnumType(observe.scrapeIntervalType)),
       observe.keepActive,
       observe.active,
@@ -182,8 +185,7 @@ export class Observe {
         name: this.name,
         url: this.url,
         cssSelector: this.cssSelector,
-        currentText: this.currentText,
-        domElementProperty: this.domElementProperty,
+        watchText: this.watchText,
         scrapeIntervalType: ScrapeIntervalType[this.scrapeInterval.type],
         keepActive: this.keepActive,
         active: this.active,
@@ -197,9 +199,9 @@ export class Observe {
   }
 
   public toString(): string {
-    return `${this.name}\n${this.cssSelector}\n${this.url}\n${
-      this.currentText
-    }${this.domElementProperty != null ? '\n' + this.name : ''}\n`;
+    return `${this.name}\n${this.cssSelector ?? 'whole page'}\n${this.url}\n${
+      this.watchText
+    }\n`;
   }
 
   public equals(observe: Observe) {

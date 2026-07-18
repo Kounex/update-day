@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0]
+
+### Changed
+
+- `/observe` and `/edit` no longer require a CSS selector. By default the bot now searches the whole page's visible text for the phrase you give it; `css-selector` is now optional and only needed to narrow the search if that phrase could also show up elsewhere on the page (nav, other products, etc). This removes the main pain point of finding a precise, unique selector for text buried in a deeply nested/generic tag.
+- Renamed the `current-text` option to `text` and the underlying `currentText` column to `watchText` to match its actual meaning: the phrase you're watching for, which you'll be notified about once it's no longer found on the page.
+- Removed the `dom-element-property` option entirely — it only made sense when pointing at one exact element, which conflicts with the new default of searching a broader area, and nothing was using it.
+
 ## [0.10.0]
 
 ### Added

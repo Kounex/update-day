@@ -41,16 +41,9 @@ export default class implements Command {
     )
     .addStringOption((option) =>
       option
-        .setName('css-selector')
-        .setDescription('CSS-Selector to look out for')
-        .setAutocomplete(true)
-        .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName('current-text')
+        .setName('text')
         .setDescription(
-          'What text is currently behind the CSS-Selector (if this changes, you will get notified)'
+          'Text currently on the page (e.g. "coming soon") - you will be notified once it is no longer found'
         )
         .setAutocomplete(true)
         .setRequired(true)
@@ -73,10 +66,11 @@ export default class implements Command {
     )
     .addStringOption((option) =>
       option
-        .setName('dom-element-property')
+        .setName('css-selector')
         .setDescription(
-          'By default, the bot will check the `innerText`, can also be href, data, value etc.'
+          'Narrows the search area, useful if the text could also appear elsewhere on the page'
         )
+        .setAutocomplete(true)
     )
     .addBooleanOption((option) =>
       option
@@ -103,10 +97,9 @@ export default class implements Command {
       Date.now(),
       interaction.options.getString('name')!,
       interaction.options.getString('url')!,
-      interaction.options.getString('css-selector')!,
-      interaction.options.getString('current-text')!,
+      interaction.options.getString('css-selector'),
+      interaction.options.getString('text')!,
       interaction.options.getString('scrape-interval'),
-      interaction.options.getString('dom-element-property'),
       interaction.options.getBoolean('keep-active') ?? false
     );
 
@@ -176,25 +169,15 @@ export default class implements Command {
         break;
       }
       case 'css-selector': {
-        if (!!observe) {
+        if (!!observe && observe.cssSelector != null) {
           options = [observe.cssSelector];
         }
 
         break;
       }
-      case 'current-text': {
+      case 'text': {
         if (!!observe) {
-          options = [observe.currentText];
-        }
-
-        break;
-      }
-      case 'dom-element-property': {
-        if (!!observe) {
-          options =
-            observe!.domElementProperty != null
-              ? [observe.domElementProperty!]
-              : [];
+          options = [observe.watchText];
         }
 
         break;

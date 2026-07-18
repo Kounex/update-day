@@ -247,26 +247,17 @@ function observeFields(observes: Observe[], compact: boolean = false) {
   if (!compact) {
     fields.push(
       {
+        name: 'Watching For',
+        value: observes.reduce(
+          (sum, observe) => `${sum}${observe.watchText}\n`,
+          ''
+        ),
+        inline: true,
+      },
+      {
         name: 'CSS-Selector',
         value: observes.reduce(
-          (sum, observe) => `${sum}${observe.cssSelector}\n`,
-          ''
-        ),
-        inline: true,
-      },
-      {
-        name: 'Current Text',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.currentText}\n`,
-          ''
-        ),
-        inline: true,
-      },
-      {
-        name: 'DOM Element Property',
-        value: observes.reduce(
-          (sum, observe) =>
-            `${sum}${observe.domElementProperty ?? 'innerText (default)'}\n`,
+          (sum, observe) => `${sum}${observe.cssSelector ?? 'whole page'}\n`,
           ''
         ),
         inline: true,

@@ -31,15 +31,9 @@ export default class implements Command {
     )
     .addStringOption((option) =>
       option
-        .setName('css-selector')
-        .setDescription('CSS-Selector to look out for | e.g. #kbis-anchor > a')
-        .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName('current-text')
+        .setName('text')
         .setDescription(
-          'Text found with CSS-Selector (if this changes or element not found, you will get notified)'
+          'Text currently on the page (e.g. "coming soon") - you will be notified once it is no longer found'
         )
         .setRequired(true)
     )
@@ -61,9 +55,9 @@ export default class implements Command {
     )
     .addStringOption((option) =>
       option
-        .setName('dom-element-property')
+        .setName('css-selector')
         .setDescription(
-          'By default, the bot will check the `innerText`, can also be href, data, value etc.'
+          'Narrows the search area, useful if the text could also appear elsewhere on the page'
         )
     )
     .addBooleanOption((option) =>
@@ -89,10 +83,9 @@ export default class implements Command {
       0,
       interaction.options.getString('name')!,
       interaction.options.getString('url')!,
-      interaction.options.getString('css-selector')!,
-      interaction.options.getString('current-text')!,
+      interaction.options.getString('css-selector'),
+      interaction.options.getString('text')!,
       interaction.options.getString('scrape-interval'),
-      interaction.options.getString('dom-element-property'),
       interaction.options.getBoolean('keep-active') ?? false
     );
 
