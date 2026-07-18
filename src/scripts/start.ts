@@ -1,5 +1,5 @@
 // This script is mainly used during development.
-// Starts Muse without applying database migrations.
+// Starts the bot without applying database migrations.
 import { DATA_DIR } from '../config.js';
 import { startBot } from '../index.js';
 import createDatabaseUrl from '../utils/create-database-url.js';
@@ -11,4 +11,8 @@ process.env.DATABASE_URL =
 (async () => {
   logBanner();
   await startBot();
-})();
+})().catch((error: unknown) => {
+  console.error('Failed to start the bot:');
+  console.error(error);
+  process.exit(1);
+});

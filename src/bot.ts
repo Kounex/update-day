@@ -167,7 +167,9 @@ export default class {
     this.client.on('debug', debug);
 
     // Handle events
-    this.client.on('guildCreate', handleGuildCreate);
+    this.client.on('guildCreate', (guild) => {
+      handleGuildCreate(guild).catch((error: unknown) => debug(error));
+    });
 
     await this.client.login();
   }

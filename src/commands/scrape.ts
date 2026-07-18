@@ -58,6 +58,7 @@ export default class implements Command {
         case ScrapeResultType.Change: {
           content =
             'A change has been found for your following observe - check quickly!';
+          break;
         }
         case ScrapeResultType.NoChange: {
           content =

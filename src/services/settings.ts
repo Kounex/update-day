@@ -1,5 +1,5 @@
 import { Settings } from '@prisma/client';
-import { injectable } from 'inversify/lib/annotation/injectable.js';
+import { injectable } from 'inversify';
 import { prisma } from '../utils/db.js';
 
 @injectable()

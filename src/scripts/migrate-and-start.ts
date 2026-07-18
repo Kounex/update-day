@@ -1,5 +1,5 @@
 // This script applies Prisma migrations
-// and then starts Muse.
+// and then starts the bot.
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -103,4 +103,10 @@ const hasDatabaseBeenMigratedToPrisma = async () => {
   spinner.succeed('Database initialized.');
 
   await startBot();
-})();
+})().catch((error: unknown) => {
+  // Without this, a bad DISCORD_TOKEN (or any other startup failure) surfaces as a
+  // raw uncaught exception stack trace instead of a clear, actionable message.
+  console.error('Failed to start the bot:');
+  console.error(error);
+  process.exit(1);
+});
