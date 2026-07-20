@@ -41,7 +41,7 @@ export default class implements Command {
       option
         .setName('scrape-interval')
         .setDescription(
-          'Set the interval the bot should scrape your Observe | Hourly is the default'
+          'How often to check | Hourly is the default'
         )
         .setChoices(
           ScrapeInterval.enumValues.map((type) => {
@@ -51,7 +51,6 @@ export default class implements Command {
             };
           })
         )
-        .setRequired(true)
     )
     .addStringOption((option) =>
       option
@@ -64,7 +63,7 @@ export default class implements Command {
       option
         .setName('keep-active')
         .setDescription(
-          'If you want to deactivate the Observe once it found a change, true by default'
+          'Keep watching after a change is found, instead of auto-deactivating - false by default'
         )
     );
 

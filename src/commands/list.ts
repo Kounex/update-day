@@ -11,6 +11,7 @@ import {
   buildObserveEmbed,
   buildObserveListEmbed,
 } from '../utils/build-embed.js';
+import respondWithObserveNames from '../utils/observe-name-autocomplete.js';
 import Command from './command.js';
 
 @injectable()
@@ -88,29 +89,6 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    const name = interaction.options.getString('name');
-    const focusedOption = interaction.options.getFocused(true);
-    var observes = await this.observeManager.getObserves({
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    });
-
-    switch (focusedOption.name) {
-      case 'name': {
-        if (name != null && name.trim().length > 0) {
-          observes = observes.filter((observe) =>
-            observe.name
-              .toLocaleLowerCase()
-              .trim()
-              .includes(name.toLocaleLowerCase().trim())
-          );
-        }
-        break;
-      }
-    }
-
-    await interaction.respond(
-      observes.map((observe) => ({ name: observe.name, value: observe.name }))
-    );
+    await respondWithObserveNames(interaction, this.observeManager);
   }
 }

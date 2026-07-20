@@ -5,7 +5,6 @@ import {
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe.js';
-import ScrapeService from '../services/scrape.js';
 import { TYPES } from '../types.js';
 import { ScrapeResultType } from '../types/classes/scrape-result.js';
 import {
@@ -13,13 +12,14 @@ import {
   buildCommandResultEmbed,
   buildObserveEmbed,
 } from '../utils/build-embed.js';
+import respondWithObserveNames from '../utils/observe-name-autocomplete.js';
 import Command from './command.js';
 
 @injectable()
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('scrape')
-    .setDescription('Manually trigger to scrape on of your Observes')
+    .setDescription('Manually trigger a scrape for one of your Observes')
     .addStringOption((option) =>
       option
         .setName('name')
@@ -30,9 +30,7 @@ export default class implements Command {
 
   constructor(
     @inject(TYPES.Managers.Observe)
-    private readonly observeManager: ObserveManager,
-    @inject(TYPES.Services.Scrape)
-    private readonly scrapeService: ScrapeService
+    private readonly observeManager: ObserveManager
   ) {}
 
   public async execute(
@@ -50,7 +48,13 @@ export default class implements Command {
     if (!!observe) {
       await interaction.deferReply({ ephemeral: true });
 
-      const scrapeResult = await this.scrapeService.observe(observe);
+      // Goes through the same manager method the background scheduler uses,
+      // so a manual scrape persists lastScrapeAtMS/amountScraped, tracks
+      // consecutive timeouts, and auto-deactivates on a found change just
+      // like a scheduled one would - it just skips the DM (notify: false)
+      // since the user is already looking at the result right here.
+      const { scrapeResult, observe: updatedObserve } =
+        await this.observeManager.processObserve(observe, { notify: false });
 
       var content: string;
       var options: EmbedOptions = { color: 'DarkGreen' };
@@ -63,6 +67,12 @@ export default class implements Command {
         case ScrapeResultType.NoChange: {
           content =
             'No change - we still found the text you provided. If this Observe is still active, we will continue to observe in the background for you!';
+          break;
+        }
+        case ScrapeResultType.ElementNotFound:
+        case ScrapeResultType.TextNotFound: {
+          content = scrapeResult.message;
+          options = { color: 'Orange' };
           break;
         }
         case ScrapeResultType.Timeout: {
@@ -82,7 +92,7 @@ export default class implements Command {
 
       await interaction.followUp({
         content: content!,
-        embeds: [buildObserveEmbed(observe, options!)],
+        embeds: [buildObserveEmbed(updatedObserve, options!)],
         ephemeral: true,
       });
     } else {
@@ -101,24 +111,6 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    var observes = await this.observeManager.getObserves({
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    });
-
-    const userText = interaction.options.getFocused();
-
-    if (userText.trim().length > 0) {
-      observes = observes.filter((observe) =>
-        observe.name
-          .toLocaleLowerCase()
-          .trim()
-          .includes(userText.toLocaleLowerCase().trim())
-      );
-    }
-
-    await interaction.respond(
-      observes.map((observe) => ({ name: observe.name, value: observe.name }))
-    );
+    await respondWithObserveNames(interaction, this.observeManager);
   }
 }

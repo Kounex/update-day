@@ -44,7 +44,9 @@ export const buildSettingsEmbed = (settings: Settings): EmbedBuilder => {
       },
     ])
     .setFooter({
-      text: `last updated: ${lastUpdated == 0 ? '-' : lastUpdated}`,
+      text: `last updated: ${
+        lastUpdated == 0 ? '-' : prettyDateTime(lastUpdated)
+      }`,
     });
 
   return message;
@@ -132,13 +134,13 @@ export const buildObserveOverview = async (
   client: Client
 ): Promise<EmbedBuilder> => {
   const message = new EmbedBuilder();
-  const uniqueUserIds = new Set(observes.map((observe) => observe.userId));
-  const userIdNameMap = new Map<string, string>();
-
-  for (const userId of uniqueUserIds) {
-    const user = await client.users.fetch(userId);
-    userIdNameMap.set(userId, user.displayName);
-  }
+  const uniqueUserIds = [...new Set(observes.map((observe) => observe.userId))];
+  const users = await Promise.all(
+    uniqueUserIds.map((userId) => client.users.fetch(userId))
+  );
+  const userIdNameMap = new Map(
+    uniqueUserIds.map((userId, index) => [userId, users[index].displayName])
+  );
 
   observes.sort(
     (ob1, ob2) =>
@@ -155,139 +157,111 @@ export const buildObserveOverview = async (
       `All ${activeOnly ? 'active' : ''} Observes managed by this bot`
     )
     .addFields(
-      {
-        name: 'User',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${userIdNameMap.get(observe.userId)!}\n`,
-          ''
-        ),
-        inline: true,
-      },
-      {
-        name: 'Name',
-        value: observes.reduce((sum, observe) => `${sum}${observe.name}\n`, ''),
-        inline: true,
-      },
-      {
-        name: 'URL',
-        value: observes.reduce((sum, observe) => `${sum}${observe.url}\n`, ''),
-        inline: true,
-      },
-      {
-        name: 'Active',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.active}\n`,
-          ''
-        ),
-        inline: true,
-      },
-      {
-        name: 'Amount Scraped',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.amountScraped}\n`,
-          ''
-        ),
-        inline: true,
-      },
-      {
-        name: 'Created At',
-        value: observes.reduce(
-          (sum, observe) =>
-            `${sum}${prettyDateTime(Number(observe.createdAtMS))}\n`,
-          ''
-        ),
-        inline: true,
-      }
+      buildColumnFields(observes, [
+        { name: 'User', value: (observe) => userIdNameMap.get(observe.userId)! },
+        { name: 'Name', value: (observe) => observe.name },
+        { name: 'URL', value: (observe) => observe.url },
+        { name: 'Active', value: (observe) => formatBool(observe.active) },
+        {
+          name: 'Amount Scraped',
+          value: (observe) => `${observe.amountScraped}`,
+        },
+        {
+          name: 'Created At',
+          value: (observe) => prettyDateTime(Number(observe.createdAtMS)),
+        },
+      ])
     )
     .setFooter({
       text: `${observes.length} ${activeOnly ? 'active' : ''} Observes, ${
-        uniqueUserIds.size
+        uniqueUserIds.length
       } users`,
     });
 
   return message;
 };
 
+const formatBool = (value: boolean): string => (value ? '✅' : '❌');
+
+// Discord rejects an embed field whose `value` exceeds 1024 characters, and
+// with enough Observes a single newline-joined column can get there. All
+// columns for a given call show the same Observes in the same order (so
+// rows still line up across columns), so the cutoff is computed once, from
+// whichever column would truncate first, and applied to every column.
+const MAX_FIELD_VALUE_LENGTH = 1024;
+const TRUNCATION_SUFFIX_RESERVE = 40;
+
+interface Column {
+  name: string;
+  inline?: boolean;
+  value: (observe: Observe) => string;
+}
+
+function buildColumnFields(observes: Observe[], columns: Column[]) {
+  let safeRowCount = observes.length;
+
+  for (const column of columns) {
+    let total = 0;
+    for (let i = 0; i < observes.length; i++) {
+      const line = `${column.value(observes[i])}\n`;
+      if (
+        total + line.length >
+        MAX_FIELD_VALUE_LENGTH - TRUNCATION_SUFFIX_RESERVE
+      ) {
+        safeRowCount = Math.min(safeRowCount, i);
+        break;
+      }
+      total += line.length;
+    }
+  }
+
+  const truncated = safeRowCount < observes.length;
+  const shown = observes.slice(0, safeRowCount);
+
+  return columns.map((column) => ({
+    name: column.name,
+    inline: column.inline ?? true,
+    value:
+      (shown.map((observe) => column.value(observe)).join('\n') || '-') +
+      (truncated ? `\n…and ${observes.length - safeRowCount} more` : ''),
+  }));
+}
+
 function observeFields(observes: Observe[], compact: boolean = false) {
-  const fields = [
-    {
-      name: 'Name',
-      value: observes.reduce((sum, observe) => `${sum}${observe.name}\n`, ''),
-      inline: true,
-    },
-    {
-      name: 'URL',
-      value: observes.reduce((sum, observe) => `${sum}${observe.url}\n`, ''),
-      inline: true,
-    },
+  const columns: Column[] = [
+    { name: 'Name', value: (observe) => observe.name },
+    { name: 'URL', value: (observe) => observe.url },
     {
       name: 'Scrape Interval',
-      value: observes.reduce(
-        (sum, observe) =>
-          `${sum}${ScrapeInterval.enumText(observe.scrapeInterval.type)}\n`,
-        ''
-      ),
-      inline: true,
+      value: (observe) => ScrapeInterval.enumText(observe.scrapeInterval.type),
     },
     {
       name: 'Last Scrape',
-      value: observes.reduce(
-        (sum, observe) =>
-          `${sum}${
-            Number(observe.lastScrapeAtMS) > 0
-              ? prettyDateTime(Number(observe.lastScrapeAtMS))
-              : '-'
-          }\n`,
-        ''
-      ),
-      inline: true,
+      value: (observe) =>
+        Number(observe.lastScrapeAtMS) > 0
+          ? prettyDateTime(Number(observe.lastScrapeAtMS))
+          : '-',
     },
   ];
 
   if (!compact) {
-    fields.push(
-      {
-        name: 'Watching For',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.watchText}\n`,
-          ''
-        ),
-        inline: true,
-      },
+    columns.push(
+      { name: 'Watching For', value: (observe) => observe.watchText },
       {
         name: 'CSS-Selector',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.cssSelector ?? 'whole page'}\n`,
-          ''
-        ),
-        inline: true,
+        value: (observe) => observe.cssSelector ?? 'whole page',
       },
       {
         name: 'Keep Active',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.keepActive}\n`,
-          ''
-        ),
-        inline: true,
+        value: (observe) => formatBool(observe.keepActive),
       },
       {
         name: 'Amount Scrapes',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.amountScraped}\n`,
-          ''
-        ),
-        inline: true,
+        value: (observe) => `${observe.amountScraped}`,
       },
-      {
-        name: 'Timeouts',
-        value: observes.reduce(
-          (sum, observe) => `${sum}${observe.timeouts}\n`,
-          ''
-        ),
-        inline: true,
-      }
+      { name: 'Timeouts', value: (observe) => `${observe.timeouts}` }
     );
   }
 
-  return fields;
+  return buildColumnFields(observes, columns);
 }

@@ -69,7 +69,9 @@ export default class implements Command {
     .addBooleanOption((option) =>
       option
         .setName('keep-active')
-        .setDescription('Keep active once a change is found - leave empty to keep as-is')
+        .setDescription(
+          'Keep watching after a change is found - leave empty to keep as-is'
+        )
     );
 
   constructor(

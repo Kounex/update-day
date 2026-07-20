@@ -39,7 +39,7 @@ export class ScrapeResult {
         return `Text \`${this.observe.watchText}\` not currently found ${where}on website \`${this.observe.url}\`! Make sure it's an exact match of what's shown on the page right now.`;
       }
       case ScrapeResultType.Timeout: {
-        return `Your Observe \`${this.observe.name}\` on \`${this.observe.url}\`ran into a timeout!`;
+        return `Your Observe \`${this.observe.name}\` on \`${this.observe.url}\` ran into a timeout!`;
       }
       case ScrapeResultType.Unknown: {
         return `Unknown, not handled error occurred while trying to scrape:\n$observe`;

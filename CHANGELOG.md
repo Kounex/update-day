@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0]
+
+Full audit of every user-facing command - clarity, correctness, and message quality.
+
+### Added
+
+- `/delete` now asks for confirmation (Delete/Cancel buttons) before actually deleting an Observe, instead of doing it immediately on a single command.
+
+### Changed
+
+- `/observe`'s `scrape-interval` is now optional (it already had a documented "Hourly is the default" - it just wasn't actually possible to omit it before).
+- Clarified the `keep-active` description on `/observe` and `/edit` - it previously read "If you want to deactivate the Observe once it found a change, true by default", which was backwards on both the polarity (`true` keeps it active, it doesn't deactivate it) and the stated default (it's `false`).
+- `/scrape` (manual trigger) now goes through the same persistence/notification pipeline as the background scheduler, instead of bypassing it entirely - it used to leave `lastScrapeAtMS`/`amountScraped` stale, skip auto-deactivation on a found change, and could cause the same change to be DM'd to the user twice (once never, once later from the scheduler catching up).
+- Uncaught-error messages shown to users no longer include raw internal error names/messages/cause - just a friendly "something went wrong, this has been logged" (full detail still goes to the debug log).
+- Removed two unused Discord gateway intents (`GuildMessageReactions`, `GuildVoiceStates`) left over from the bot this project was originally forked from.
+- Boolean fields in embeds (Active, Keep Active) now show ✅/❌ instead of the literal text `true`/`false`.
+- Deduplicated near-identical autocomplete logic across `/delete`, `/edit`, `/list`, `/reactivate`, and `/scrape` into one shared helper.
+- Assorted message-copy fixes: missing spaces after inline code in a few notifications, "on of" → "one of", "a Observe" → "an Observe", "it's limit" → "its limit".
+
+### Fixed
+
+- `/admin list-observes`'s `this-guild`/`active-only` options were documented as "true by default" but actually defaulted to showing **every guild's Observes, including inactive ones**, when left unset - and explicitly passing `this-guild: false` did the opposite of what it should. An admin running this with no arguments, expecting just their own guild's active Observes as documented, would see every other guild's data on this bot too.
+- `/reactivate` didn't reset `consecutiveTimeouts`, so an Observe deactivated for hitting the timeout limit would immediately re-deactivate after just one more timeout instead of getting a fresh run of the full limit.
+- Settings embed's "last updated" footer showed a raw millisecond timestamp instead of a formatted date.
+- `buildObserveOverview` (used by `/admin list-observes`) fetched each user's Discord profile one at a time in a loop instead of in parallel.
+- Multi-Observe embed fields (`/list`, `/admin list-observes`) had no guard against Discord's 1024-character field-value limit - a guild/user with enough Observes would have hit an API error building the embed. Now truncates safely with a "…and N more" note, keeping all columns aligned to the same row count.
+
 ## [0.11.2]
 
 ### Changed

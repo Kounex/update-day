@@ -48,17 +48,23 @@ export default class implements Command {
       case 'list-observes': {
         await interaction.deferReply({ ephemeral: true });
 
-        const thisGuild = interaction.options.getBoolean('this-guild');
-        const activeOnly = interaction.options.getBoolean('active-only');
+        // `getBoolean` returns `null` when the user left the option empty,
+        // which must fall back to each option's documented default (true)
+        // rather than to "unfiltered" - otherwise an admin running this with
+        // no arguments would see every guild's Observes (including inactive
+        // ones), not just their own guild's active ones as advertised.
+        const thisGuild = interaction.options.getBoolean('this-guild') ?? true;
+        const activeOnly =
+          interaction.options.getBoolean('active-only') ?? true;
 
         const observes = await this.observeManager.getObserves({
-          guildId: thisGuild != null ? interaction.guildId! : undefined,
-          active: activeOnly ?? undefined,
+          guildId: thisGuild ? interaction.guildId! : undefined,
+          active: activeOnly ? true : undefined,
         });
 
         const embed = await buildObserveOverview(
           observes,
-          activeOnly ?? false,
+          activeOnly,
           this.client
         );
 

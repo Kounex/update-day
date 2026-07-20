@@ -7,13 +7,14 @@ import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
 import { buildCommandResultEmbed } from '../utils/build-embed.js';
+import respondWithObserveNames from '../utils/observe-name-autocomplete.js';
 import Command from './command.js';
 
 @injectable()
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('reactivate')
-    .setDescription('Reactivate on of your Observes')
+    .setDescription('Reactivate one of your Observes')
     .addStringOption((option) =>
       option
         .setName('name')
@@ -47,26 +48,8 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    var observes = (
-      await this.observeManager.getObserves({
-        guildId: interaction.guildId!,
-        userId: interaction.user.id,
-      })
-    ).filter((observe) => !observe.active);
-
-    const userText = interaction.options.getFocused();
-
-    if (userText.trim().length > 0) {
-      observes = observes.filter((observe) =>
-        observe.name
-          .toLocaleLowerCase()
-          .trim()
-          .includes(userText.toLocaleLowerCase().trim())
-      );
-    }
-
-    await interaction.respond(
-      observes.map((observe) => ({ name: observe.name, value: observe.name }))
-    );
+    await respondWithObserveNames(interaction, this.observeManager, {
+      filter: (observe) => !observe.active,
+    });
   }
 }

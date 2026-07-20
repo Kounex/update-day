@@ -71,7 +71,12 @@ export default class {
             await command.execute(interaction);
           }
         } else if (interaction.isButton()) {
-          const command = this.commandsByButtonId.get(interaction.customId);
+          // handledButtonIds entries are prefixes, not exact IDs - a button
+          // needing per-interaction data (e.g. which Observe) encodes it as
+          // `${prefix}${data}` in its own customId.
+          const command = this.commandsByButtonId.find((_command, prefix) =>
+            interaction.customId.startsWith(prefix)
+          );
 
           if (!command) {
             return;
