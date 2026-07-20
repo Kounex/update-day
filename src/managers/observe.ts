@@ -67,13 +67,22 @@ export default class {
   }
 
   public async editObserve(
+    guildId: string,
+    userId: string,
     name: string,
-    editedObserve: Observe
+    edits: {
+      // `undefined` means "not provided, keep the current value". `cssSelector`
+      // additionally supports `null` to mean "provided, clear it" (go back to
+      // whole-page search), since it's the one field that can be unset.
+      name?: string;
+      url?: string;
+      cssSelector?: string | null;
+      watchText?: string;
+      scrapeInterval?: string;
+      keepActive?: boolean;
+    }
   ): Promise<CommandResult> {
-    const observes = await this.getObserves({
-      guildId: editedObserve.guildId,
-      userId: editedObserve.userId,
-    });
+    const observes = await this.getObserves({ guildId, userId });
 
     // Find the [Observe] the user is trying to edit
     const currentObserve = observes.find((observe) => observe.name == name);
@@ -86,19 +95,17 @@ export default class {
       };
     }
 
+    const newName = edits.name ?? currentObserve.name;
+
     // Check if user tries to rename the observe into another existing observe of his.
     // If so, abort edit
     if (
-      observes.some(
-        (observe) =>
-          observe.userId == editedObserve.userId &&
-          observe.name == editedObserve.name &&
-          name != editedObserve.name
-      )
+      newName != name &&
+      observes.some((observe) => observe.name == newName)
     ) {
       return {
         successful: false,
-        message: `You already have an Observe with the name \`${editedObserve.name}\`! Check your Observes with \`/list\` and choose another name if you still want to edit your Observe!`,
+        message: `You already have an Observe with the name \`${newName}\`! Check your Observes with \`/list\` and choose another name if you still want to edit your Observe!`,
       };
     }
 
@@ -107,12 +114,14 @@ export default class {
       currentObserve.userId,
       currentObserve.createdAtMS,
       Date.now(),
-      editedObserve.name,
-      editedObserve.url,
-      editedObserve.cssSelector,
-      editedObserve.watchText,
-      editedObserve.scrapeInterval,
-      editedObserve.keepActive,
+      newName,
+      edits.url ?? currentObserve.url,
+      edits.cssSelector !== undefined
+        ? edits.cssSelector
+        : currentObserve.cssSelector,
+      edits.watchText ?? currentObserve.watchText,
+      edits.scrapeInterval ?? currentObserve.scrapeInterval,
+      edits.keepActive ?? currentObserve.keepActive,
       currentObserve.active,
       currentObserve.lastScrapeAtMS,
       currentObserve.consecutiveTimeouts,
@@ -141,6 +150,7 @@ export default class {
 
       return {
         successful: true,
+        observe: newObserve,
       };
     } else {
       return {

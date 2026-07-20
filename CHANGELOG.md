@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.2]
+
+### Changed
+
+- `/edit` no longer requires re-entering every field. Only `current-name` (which Observe to edit) is required - `name`, `url`, `text`, `scrape-interval`, `css-selector` and `keep-active` are all optional now, and any left empty keep their current value instead of being overwritten or reset to a default. This also fixes a latent bug where editing any field silently reset `keep-active` back to `false` if you didn't re-specify it.
+- `css-selector` can be explicitly cleared back to whole-page search by typing `none`.
+
 ## [0.11.1]
 
 ### Fixed

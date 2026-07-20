@@ -6,7 +6,7 @@ import {
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
-import { Observe, ScrapeInterval } from '../types/models/observe.js';
+import { ScrapeInterval } from '../types/models/observe.js';
 import {
   buildCommandResultEmbed,
   buildObserveEmbed,
@@ -21,39 +21,34 @@ export default class implements Command {
     .addStringOption((option) =>
       option
         .setName('current-name')
-        .setDescription('Name so you can recognize and manage it later')
+        .setDescription('The Observe to edit - everything else is optional')
         .setAutocomplete(true)
         .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('name')
-        .setDescription('Name so you can recognize and manage it later')
+        .setDescription('New name - leave empty to keep the current one')
         .setAutocomplete(true)
-        .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('url')
-        .setDescription('Website URL')
+        .setDescription('New URL - leave empty to keep the current one')
         .setAutocomplete(true)
-        .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('text')
         .setDescription(
-          'Text currently on the page (e.g. "coming soon") - you will be notified once it is no longer found'
+          'New text to watch for - leave empty to keep the current one'
         )
         .setAutocomplete(true)
-        .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('scrape-interval')
-        .setDescription(
-          'Set the interval the bot should scrape your Observe, Hourly is the default'
-        )
+        .setDescription('New scrape interval - leave empty to keep the current one')
         .setChoices(
           ScrapeInterval.enumValues.map((type) => {
             return {
@@ -62,22 +57,19 @@ export default class implements Command {
             };
           })
         )
-        .setRequired(true)
     )
     .addStringOption((option) =>
       option
         .setName('css-selector')
         .setDescription(
-          'Narrows the search area, useful if the text could also appear elsewhere on the page'
+          'Narrows the search area; type "none" to remove it and go back to whole page'
         )
         .setAutocomplete(true)
     )
     .addBooleanOption((option) =>
       option
         .setName('keep-active')
-        .setDescription(
-          'If you want to keep the Observe active once it found a change, false by default'
-        )
+        .setDescription('Keep active once a change is found - leave empty to keep as-is')
     );
 
   constructor(
@@ -90,44 +82,42 @@ export default class implements Command {
   ): Promise<void> {
     const currentName = interaction.options.getString('current-name')!;
 
-    const observe = Observe.create(
+    // `getString`/`getBoolean` return `null` for an option the user left
+    // empty - normalized to `undefined` here so the manager can tell "not
+    // provided, keep the current value" apart from an actual value.
+    // `css-selector` is the one exception: it also accepts the literal
+    // "none" to mean "provided, clear it" (go back to whole-page search).
+    const rawCssSelector = interaction.options.getString('css-selector');
+    const cssSelectorEdit =
+      rawCssSelector == null
+        ? undefined
+        : rawCssSelector.trim().toLocaleLowerCase() === 'none'
+          ? null
+          : rawCssSelector;
+
+    const commandResult = await this.observeManager.editObserve(
       interaction.guildId!,
       interaction.user.id,
-      Date.now(),
-      Date.now(),
-      interaction.options.getString('name')!,
-      interaction.options.getString('url')!,
-      interaction.options.getString('css-selector'),
-      interaction.options.getString('text')!,
-      interaction.options.getString('scrape-interval'),
-      interaction.options.getBoolean('keep-active') ?? false
+      currentName,
+      {
+        name: interaction.options.getString('name') ?? undefined,
+        url: interaction.options.getString('url') ?? undefined,
+        cssSelector: cssSelectorEdit,
+        watchText: interaction.options.getString('text') ?? undefined,
+        scrapeInterval:
+          interaction.options.getString('scrape-interval') ?? undefined,
+        keepActive: interaction.options.getBoolean('keep-active') ?? undefined,
+      }
     );
 
-    if (observe instanceof Observe) {
-      const commandResult = await this.observeManager.editObserve(
-        currentName,
-        observe
-      );
-
-      if (commandResult.successful) {
-        await interaction.reply({
-          embeds: [buildObserveEmbed(observe)],
-          ephemeral: true,
-        });
-      } else {
-        await interaction.reply({
-          embeds: [buildCommandResultEmbed(commandResult)],
-          ephemeral: true,
-        });
-      }
+    if (commandResult.successful) {
+      await interaction.reply({
+        embeds: [buildObserveEmbed(commandResult.observe!)],
+        ephemeral: true,
+      });
     } else {
       await interaction.reply({
-        embeds: [
-          buildCommandResultEmbed({
-            successful: false,
-            message: observe.message,
-          }),
-        ],
+        embeds: [buildCommandResultEmbed(commandResult)],
         ephemeral: true,
       });
     }
