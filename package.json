@@ -31,7 +31,7 @@
     "postinstall": "patch-package"
   },
   "devDependencies": {
-    "@release-it/keep-a-changelog": "^5.0.0",
+    "@release-it/keep-a-changelog": "^8.0.1",
     "@types/debug": "^4.1.12",
     "@types/node": "^22.20.1",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
@@ -42,7 +42,7 @@
     "eslint-plugin-import": "2.32.0",
     "husky": "^9.0.11",
     "prisma": "^5.22.0",
-    "release-it": "^17.11.0",
+    "release-it": "^21.1.1",
     "type-fest": "^5.10.0",
     "typescript": "^5.9.3"
   },
