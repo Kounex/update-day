@@ -77,7 +77,7 @@
   "dependencies": {
     "@discordjs/builders": "1.14.1",
     "@discordjs/rest": "2.6.3",
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "7.10.1",
     "css-what": "^6.1.0",
     "debug": "^4.3.5",
     "discord-api-types": "0.38.57",
