@@ -86,7 +86,7 @@
     "execa": "^10.2.0",
     "inversify": "^8.2.3",
     "nodesplash": "^0.1.1",
-    "ora": "^8.0.1",
+    "ora": "^9.4.1",
     "p-retry": "^8.0.1",
     "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0",
