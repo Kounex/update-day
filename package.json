@@ -90,7 +90,7 @@
     "p-retry": "^8.0.1",
     "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0",
-    "puppeteer": "^25.3.0",
+    "puppeteer": "^25.16.0",
     "read-pkg": "9.0.1",
     "reflect-metadata": "^0.2.2",
     "tsx": "4.23.15"
