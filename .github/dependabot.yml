@@ -1,0 +1,23 @@
+# Base image + npm packages; patch/digest bumps merge and release themselves
+# (dependabot-refresh.yml -> refresh-release.yml). See it-env/templates/container-image/.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      patches:
+        update-types: ["patch"]
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
