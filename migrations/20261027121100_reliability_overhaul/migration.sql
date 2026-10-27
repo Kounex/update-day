@@ -57,3 +57,11 @@ PRAGMA defer_foreign_keys=OFF;
 
 -- CreateIndex
 CREATE INDEX "ScrapeLog_observeId_atMS_idx" ON "ScrapeLog"("observeId", "atMS");
+
+-- Carry over what the old version knew. It switched an Observe off either
+-- after reporting a found change (with consecutiveTimeouts reset to 0) or
+-- after hitting the consecutive-timeout limit (at least 1). So an inactive
+-- Observe with 0 consecutive timeouts has already had its change reported:
+-- remember that, so reactivating it waits for the next change instead of
+-- repeating this one.
+UPDATE "Observe" SET "lastState" = 'absent' WHERE "active" = 0 AND "consecutiveTimeouts" = 0;

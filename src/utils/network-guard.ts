@@ -131,6 +131,12 @@ export class NetworkGuard {
       return !isBlockedAddress(hostname);
     }
 
+    // Chrome answers `localhost` and `*.localhost` with loopback itself,
+    // without asking DNS - so a failed lookup here proves nothing.
+    if (/(^|\.)localhost\.?$/i.test(hostname)) {
+      return false;
+    }
+
     const cached = this.cache.get(hostname);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.allowed;

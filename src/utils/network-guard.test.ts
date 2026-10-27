@@ -61,6 +61,8 @@ describe('NetworkGuard', () => {
     assert.equal(await guard.isAllowed('http://127.0.0.1:9000/api'), false);
     assert.equal(await guard.isAllowed('http://[::1]/'), false);
     assert.equal(await guard.isAllowed('http://localhost/'), false);
+    assert.equal(await guard.isAllowed('http://anything.localhost:8080/'), false);
+    assert.equal(await guard.isAllowed('http://LOCALHOST./'), false);
   });
 
   it('blocks a host if any of its addresses is private', async () => {

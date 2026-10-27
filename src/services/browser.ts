@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, BrowserContext, Page } from 'puppeteer';
 import Config from '../config.js';
 import { TYPES } from '../types.js';
 import logger from '../utils/logger.js';
@@ -8,6 +8,24 @@ import Semaphore from '../utils/semaphore.js';
 // Restart Chrome now and then - long-running headless Chrome slowly grows
 // in memory, and a fresh process also clears anything that got wedged.
 const RECYCLE_AFTER_PAGES = 200;
+
+const SETUP_TIMEOUT_MS = 30_000;
+
+const withTimeout = async <T>(promise: Promise<T>, ms: number): Promise<T> => {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`Timed out after ${ms} ms`));
+        }, ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+};
 
 export class DeadlineError extends Error {
   constructor(ms: number) {
@@ -54,13 +72,27 @@ export default class BrowserService {
   ): Promise<T> {
     return this.limiter.run(async () => {
       const browser = await this.getBrowser();
-      const context = await browser.createBrowserContext();
+      let context: BrowserContext;
+      let page: Page;
+      try {
+        // Normally instant. If Chrome can't even do this, it's wedged while
+        // still "connected" - replace it rather than fail every check.
+        context = await withTimeout(browser.createBrowserContext(), SETUP_TIMEOUT_MS);
+        page = await withTimeout(context.newPage(), SETUP_TIMEOUT_MS);
+      } catch (error: unknown) {
+        logger.error('Chrome could not open a page, restarting it', error);
+        if (this.browser === browser) {
+          await this.close();
+        }
+
+        throw error;
+      }
+
       this.pagesSinceLaunch++;
       this.totalPages++;
 
       let timer: NodeJS.Timeout | undefined;
       try {
-        const page = await context.newPage();
         // A page that hangs (stuck navigation, endless script) must not
         // block its slot forever - closing the context in `finally` makes
         // whatever the task is still awaiting reject.

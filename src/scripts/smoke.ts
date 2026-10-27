@@ -67,6 +67,13 @@ const main = async () => {
     '/subresource'(response) {
       response.end(page(`<p>Coming soon</p><img src="${internalUrl}">`));
     },
+    '/below-fold'(response) {
+      response.end(
+        page(
+          '<div style="height:2500px;background:#0000ff"></div><div id="target" style="width:300px;height:80px;background:#ff0000">Coming soon</div><div style="height:2500px;background:#0000ff"></div>'
+        )
+      );
+    },
     '/slow'(response) {
       setTimeout(() => response.end(page('<p>late</p>')), 10_000);
     },
@@ -142,6 +149,30 @@ const main = async () => {
       assert.equal(result.text.trim(), '10,00 €');
       assert.equal(result.matchFound, null);
       assert.ok(result.screenshot);
+    }],
+    ['screenshots the selected element even far down the page', async () => {
+      const result = await scrape('/below-fold', { cssSelector: '#target' });
+      const shot = result.screenshot;
+      assert.ok(result.ok && shot);
+      // Let Chrome decode the JPEG and read its center pixel.
+      const [red, green, blue] = await browser.withPage(
+        async (decoder) =>
+          decoder.evaluate(async (dataUrl: string) => {
+            const image = new Image();
+            image.src = dataUrl;
+            await image.decode();
+            const canvas = document.createElement('canvas');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            const context = canvas.getContext('2d')!;
+            context.drawImage(image, 0, 0);
+            return Array.from(
+              context.getImageData(image.width / 2, image.height / 2, 1, 1).data
+            );
+          }, `data:image/jpeg;base64,${shot.toString('base64')}`),
+        { deadlineMS: 10_000 }
+      );
+      assert.ok(red > 200 && green < 60 && blue < 60, `center pixel is ${red},${green},${blue}, not red`);
     }],
     ['a selector that matches nothing is a failure, not a change', async () => {
       const result = await scrape('/static', { cssSelector: '#nope' }, 3_000);

@@ -384,14 +384,20 @@ export default class ScrapeService {
       if (target.cssSelector) {
         const box = await scope.boundingBox();
         if (box && box.width > 0 && box.height > 0) {
+          // boundingBox() is relative to the viewport, a screenshot clip to
+          // the page - after scrolling the element into view they differ.
+          const scroll = await page.evaluate(() => ({
+            x: window.visualViewport?.pageLeft ?? window.scrollX,
+            y: window.visualViewport?.pageTop ?? window.scrollY,
+          }));
           return Buffer.from(
             await page.screenshot({
               type: 'jpeg',
               quality: 75,
               captureBeyondViewport: true,
               clip: {
-                x: box.x,
-                y: box.y,
+                x: box.x + scroll.x,
+                y: box.y + scroll.y,
                 width: Math.min(box.width, 1366),
                 height: Math.min(box.height, MAX_SCREENSHOT_HEIGHT),
               },

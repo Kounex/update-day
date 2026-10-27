@@ -35,6 +35,8 @@ const CONFIRM_DELAY_MS = Number(process.env.CONFIRM_DELAY_MS ?? 20_000);
 const MANUAL_CONFIRM_DELAY_MS = 3_000;
 // Undelivered notifications are retried sooner than a long interval would.
 const UNDELIVERED_RETRY_MS = 15 * 60 * 1000;
+// Same for a suspected change whose confirmation load failed.
+const CONFIRM_RETRY_MS = 5 * 60 * 1000;
 const HISTORY_SIZE = 50;
 const MAX_STORED_TEXT = 1000;
 
@@ -245,7 +247,25 @@ export default class ObserveManager {
       ...scrapeOptions,
       screenshot: true,
     });
-    const confirmed = recheck.ok && evaluate(observe, recheck).triggered;
+    if (!recheck.ok) {
+      // Couldn't look a second time (rate limit, bot wall, timeout): that's
+      // a failed check, not a verdict - count it and look again soon,
+      // instead of waiting a whole interval and calling it a glitch.
+      await this.log(observe, recheck, 'confirmation check');
+      await this.handleFailure(
+        observe,
+        recheck,
+        {
+          ...common,
+          nextScrapeAtMS: Math.min(common.nextScrapeAtMS, now + CONFIRM_RETRY_MS),
+        },
+        settings,
+        notify
+      );
+      return { outcome: 'failed', scrapeResult: recheck };
+    }
+
+    const confirmed = evaluate(observe, recheck).triggered;
     await this.log(observe, recheck, confirmed ? 'confirmed' : 'not confirmed');
 
     if (!confirmed) {
@@ -377,6 +397,28 @@ export default class ObserveManager {
       };
     }
 
+    // A check running meanwhile would write its (old target's) state over
+    // the new baseline, or this edit over the check's result.
+    if (this.inFlight.has(current.id)) {
+      return {
+        successful: false,
+        message: `\`${current.name}\` is being checked right now - try again in a moment.`,
+      };
+    }
+
+    this.inFlight.add(current.id);
+    try {
+      return await this.applyEdit(current, edits);
+    } finally {
+      this.inFlight.delete(current.id);
+    }
+  }
+
+  private async applyEdit(
+    current: Observe,
+    edits: Parameters<ObserveManager['editObserve']>[3]
+  ): Promise<ValidationResult> {
+    const { guildId, userId } = current;
     const newName = edits.name?.trim() ?? current.name;
     if (
       newName !== current.name &&
@@ -406,8 +448,17 @@ export default class ObserveManager {
     }
 
     const now = Date.now();
+    // Only what the user controls - counters and state belong to the checks.
+    const fields = updated.toPrisma();
     let data: Prisma.ObserveUpdateInput = {
-      ...updated.toPrisma(),
+      name: fields.name,
+      url: fields.url,
+      cssSelector: fields.cssSelector,
+      watchText: fields.watchText,
+      watchMode: fields.watchMode,
+      notifyMode: fields.notifyMode,
+      scrapeIntervalType: fields.scrapeIntervalType,
+      keepActive: fields.keepActive,
       updatedAtMS: now,
     };
     let scrapeResult: ScrapeResult | undefined;

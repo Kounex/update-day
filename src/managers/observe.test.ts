@@ -214,6 +214,17 @@ describe('ObserveManager', () => {
     assert.ok(fields.some((field) => field.name === 'Now' && field.value.includes('8 €')));
   });
 
+  it('counts a failed confirmation load as a failed check and retries soon', async () => {
+    const observe = await create();
+    scraper.queue.push(page(false), failure(ScrapeFailure.Blocked));
+    const result = await manager.processObserve(observe);
+    assert.equal(result.outcome, 'failed');
+    assert.equal(notifier.sent.length, 0);
+    assert.equal(result.observe.consecutiveTimeouts, 1);
+    assert.equal(result.observe.lastState, 'present');
+    assert.ok(Number(result.observe.nextScrapeAtMS) <= Date.now() + (5 * 60 * 1000));
+  });
+
   it('counts failures, never as a change, and deactivates at the limit', async () => {
     let observe = await create();
     for (let i = 0; i < 3; i++) {
@@ -272,6 +283,27 @@ describe('ObserveManager', () => {
     assert.equal((await first).outcome, 'unchanged');
     scraper.scrape = original;
     assert.equal(manager.isBusy(observe), false);
+  });
+
+  it('refuses to edit an Observe while it is being checked', async () => {
+    const observe = await create();
+    let release!: () => void;
+    const original = scraper.scrape.bind(scraper);
+    scraper.scrape = async () =>
+      new Promise<ScrapeResult>((resolve) => {
+        release = () => {
+          resolve(page(true));
+        };
+      });
+    const check = manager.processObserve(observe);
+    const edit = await manager.editObserve('guild', 'user', observe.name, {
+      keepActive: true,
+    });
+    assert.equal(edit.successful, false);
+    assert.match(edit.message ?? '', /being checked/);
+    release();
+    await check;
+    scraper.scrape = original;
   });
 
   it('re-validates a changed target on edit and keeps the old one if it fails', async () => {
