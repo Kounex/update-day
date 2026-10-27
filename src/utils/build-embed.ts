@@ -7,6 +7,7 @@ import {
   Client,
   ColorResolvable,
   EmbedBuilder,
+  MessageActionRowComponentBuilder,
 } from 'discord.js';
 import {
   ScrapeError,
@@ -37,12 +38,14 @@ export interface MessagePayload {
   content?: string;
   embeds: EmbedBuilder[];
   files?: AttachmentBuilder[];
-  components?: Array<ActionRowBuilder<ButtonBuilder>>;
+  components?: Array<ActionRowBuilder<MessageActionRowComponentBuilder>>;
 }
 
 export const BUTTON_KEEP_WATCHING = 'obs:keep:';
 export const BUTTON_PAUSE = 'obs:pause:';
 export const BUTTON_DELETE = 'obs:delete:';
+export const BUTTON_EDIT = 'obs:edit:';
+export const BUTTON_NEW = 'obs:new';
 
 const SCREENSHOT_NAME = 'screenshot.jpg';
 
@@ -97,6 +100,14 @@ const lastResultText = (observe: Observe): string => {
   return `${when}: ${observe.lastResult ?? 'ok'}`;
 };
 
+export const newObserveRow = (): ActionRowBuilder<ButtonBuilder> =>
+  new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(BUTTON_NEW)
+      .setLabel('New Observe')
+      .setStyle(ButtonStyle.Primary)
+  );
+
 export const actionRow = (
   observe: Pick<Observe, 'id' | 'url' | 'active'>,
   options: { showStateButton?: boolean } = {}
@@ -127,6 +138,10 @@ export const actionRow = (
   }
 
   row.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${BUTTON_EDIT}${observe.id}`)
+      .setLabel('Edit')
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`${BUTTON_DELETE}${observe.id}`)
       .setLabel('Delete…')

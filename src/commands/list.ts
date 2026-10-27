@@ -12,6 +12,7 @@ import {
   buildCommandResultEmbed,
   buildObserveEmbed,
   buildObserveListEmbed,
+  newObserveRow,
 } from '../utils/build-embed.js';
 import respondWithObserveNames from '../utils/observe-name-autocomplete.js';
 import Command from './command.js';
@@ -63,6 +64,7 @@ export default class implements Command {
       });
       await interaction.reply({
         embeds: [buildObserveListEmbed(observes, activeOnly, compact)],
+        components: [newObserveRow()],
         flags: MessageFlags.Ephemeral,
       });
       return;

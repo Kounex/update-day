@@ -1,19 +1,31 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import {
+  ButtonInteraction,
   ChatInputCommandInteraction,
   MessageFlags,
+  ModalSubmitInteraction,
   PermissionFlagsBits,
+  StringSelectMenuInteraction,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
+import { emptyDraftInput } from '../managers/drafts.js';
+import FormFlow from '../managers/form-flow.js';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
-import { NotifyMode, Observe } from '../types/models/observe.js';
+import {
+  NotifyMode,
+  Observe,
+  toNotifyMode,
+  toWatchMode,
+} from '../types/models/observe.js';
 import {
   actionRow,
+  BUTTON_NEW,
   buildCommandResultEmbed,
   buildObserveEmbed,
   buildScrapeReport,
 } from '../utils/build-embed.js';
+import { DRAFT_PREFIX, MODAL_PREFIX } from '../utils/observe-form.js';
 import Command from './command.js';
 import {
   intervalOption,
@@ -30,18 +42,16 @@ import {
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('observe')
-    .setDescription('Watch a web page and get notified when it changes')
+    .setDescription('Watch a web page and get notified when it changes - without options, opens a form')
     .addStringOption((option) =>
       nameOption(option)
         .setName('name')
         .setDescription('Name so you can recognize and manage it later')
-        .setRequired(true)
     )
     .addStringOption((option) =>
       urlOption(option)
         .setName('url')
         .setDescription('Page to watch, e.g. https://shop.example.com/products/thing')
-        .setRequired(true)
     )
     .addStringOption((option) =>
       textOption(option)
@@ -76,20 +86,47 @@ export default class implements Command {
       )
     );
 
+  // The form flow: "New Observe" buttons, the preview's settings and
+  // buttons, and the submitted form.
+  public readonly handledComponentIds = [BUTTON_NEW, DRAFT_PREFIX] as const;
+  public readonly handledModalIds = [MODAL_PREFIX] as const;
+
   constructor(
     @inject(TYPES.Managers.Observe)
-    private readonly observeManager: ObserveManager
+    private readonly observeManager: ObserveManager,
+    @inject(TYPES.Managers.FormFlow)
+    private readonly formFlow: FormFlow
   ) {}
 
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
+    const name = interaction.options.getString('name');
+    const url = interaction.options.getString('url');
+    if (!name || !url) {
+      // Not enough to go on: open the form, filled with whatever was given.
+      await this.formFlow.openNew(interaction, {
+        ...emptyDraftInput(),
+        name: name ?? '',
+        url: url ?? '',
+        watchText: interaction.options.getString('text') ?? '',
+        watchMode: toWatchMode(interaction.options.getString('mode')),
+        cssSelector: interaction.options.getString('css-selector'),
+        scrapeInterval:
+          interaction.options.getString('scrape-interval') ??
+          emptyDraftInput().scrapeInterval,
+        keepActive: interaction.options.getBoolean('keep-active') ?? false,
+        notifyMode: toNotifyMode(interaction.options.getString('notify')),
+      });
+      return;
+    }
+
     const observe = Observe.create({
       guildId: interaction.guildId!,
       userId: interaction.user.id,
       channelId: interaction.channelId,
-      name: interaction.options.getString('name')!,
-      url: interaction.options.getString('url')!,
+      name,
+      url,
       watchText: interaction.options.getString('text'),
       watchMode: interaction.options.getString('mode'),
       scrapeInterval: interaction.options.getString('scrape-interval'),
@@ -160,5 +197,28 @@ export default class implements Command {
       files: report.files,
       components: [actionRow(result.observe!)],
     });
+  }
+
+  public async handleButtonInteraction(
+    interaction: ButtonInteraction
+  ): Promise<void> {
+    if (interaction.customId === BUTTON_NEW) {
+      await this.formFlow.openNew(interaction, emptyDraftInput());
+      return;
+    }
+
+    await this.formFlow.handleButton(interaction);
+  }
+
+  public async handleSelectMenuInteraction(
+    interaction: StringSelectMenuInteraction
+  ): Promise<void> {
+    await this.formFlow.handleSelect(interaction);
+  }
+
+  public async handleModalSubmitInteraction(
+    interaction: ModalSubmitInteraction
+  ): Promise<void> {
+    await this.formFlow.handleModalSubmit(interaction);
   }
 }

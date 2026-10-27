@@ -107,12 +107,12 @@ export const notifyModeText = (mode: NotifyMode): string => {
   }
 };
 
-const toWatchMode = (value: string | null | undefined): WatchMode =>
+export const toWatchMode = (value: string | null | undefined): WatchMode =>
   Object.values(WatchMode).includes(value as WatchMode)
     ? (value as WatchMode)
     : WatchMode.Disappears;
 
-const toNotifyMode = (value: string | null | undefined): NotifyMode =>
+export const toNotifyMode = (value: string | null | undefined): NotifyMode =>
   Object.values(NotifyMode).includes(value as NotifyMode)
     ? (value as NotifyMode)
     : NotifyMode.DM;

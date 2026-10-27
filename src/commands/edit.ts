@@ -1,13 +1,16 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import {
   AutocompleteInteraction,
+  ButtonInteraction,
   ChatInputCommandInteraction,
   MessageFlags,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
+import FormFlow from '../managers/form-flow.js';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
 import {
+  BUTTON_EDIT,
   buildCommandResultEmbed,
   buildObserveEmbed,
   buildScrapeReport,
@@ -15,6 +18,7 @@ import {
 import respondWithObserveNames, {
   toChoices,
 } from '../utils/observe-name-autocomplete.js';
+import { ownedObserveFromButton } from '../utils/owned-observe.js';
 import Command from './command.js';
 import {
   intervalOption,
@@ -31,7 +35,7 @@ import {
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('edit')
-    .setDescription('Edit one of your existing Observes')
+    .setDescription('Edit one of your Observes - with only the name given, opens a form')
     .addStringOption((option) =>
       option
         .setName('current-name')
@@ -86,15 +90,43 @@ export default class implements Command {
       )
     );
 
+  public readonly handledComponentIds = [BUTTON_EDIT] as const;
+
   constructor(
     @inject(TYPES.Managers.Observe)
-    private readonly observeManager: ObserveManager
+    private readonly observeManager: ObserveManager,
+    @inject(TYPES.Managers.FormFlow)
+    private readonly formFlow: FormFlow
   ) {}
 
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
     const currentName = interaction.options.getString('current-name')!;
+
+    // Nothing to change given: open the form, filled with the Observe.
+    if (interaction.options.data.length === 1) {
+      const observe = await this.observeManager.findByName(
+        interaction.guildId!,
+        interaction.user.id,
+        currentName
+      );
+      if (observe) {
+        await this.formFlow.openEdit(interaction, observe);
+      } else {
+        await interaction.reply({
+          embeds: [
+            buildCommandResultEmbed({
+              successful: false,
+              message: `You don't have an Observe called \`${currentName}\` - check \`/list\`.`,
+            }),
+          ],
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      return;
+    }
 
     // `getString`/`getBoolean` return `null` for an option the user left
     // empty - normalized to `undefined` here so the manager can tell "not
@@ -159,6 +191,19 @@ export default class implements Command {
         content: `✅ \`${observe.name}\` updated.`,
         embeds: [buildObserveEmbed(observe)],
       });
+    }
+  }
+
+  public async handleButtonInteraction(
+    interaction: ButtonInteraction
+  ): Promise<void> {
+    const observe = await ownedObserveFromButton(
+      interaction,
+      BUTTON_EDIT,
+      this.observeManager
+    );
+    if (observe) {
+      await this.formFlow.openEdit(interaction, observe);
     }
   }
 

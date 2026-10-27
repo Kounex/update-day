@@ -120,6 +120,31 @@ describe('ObserveManager', () => {
     assert.equal((await manager.getHistory(observe))[0].detail, 'created');
   });
 
+  it('reuses a fresh preview instead of loading the page again', async () => {
+    const observe = Observe.create({
+      guildId: 'guild',
+      userId: 'user',
+      name: 'from-form',
+      url: 'https://shop.test/item',
+      watchText: 'sold out',
+    });
+    assert.ok(observe instanceof Observe);
+    const result = await manager.addObserve(observe, { scrapeResult: page(true) });
+    assert.equal(result.successful, true);
+    assert.equal(scraper.calls, 0);
+
+    const edited = await manager.editObserve(
+      'guild',
+      'user',
+      'from-form',
+      { watchText: 'coming soon', watchMode: WatchMode.Disappears },
+      { scrapeResult: page(true) }
+    );
+    assert.equal(edited.successful, true);
+    assert.equal(edited.observe?.watchText, 'coming soon');
+    assert.equal(scraper.calls, 0);
+  });
+
   it('refuses a Disappears Observe whose text is not on the page', async () => {
     const observe = Observe.create({
       guildId: 'guild',

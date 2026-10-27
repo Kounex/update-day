@@ -24,12 +24,14 @@ After notifying, an Observe goes inactive - unless `keep-active` is set, in whic
 
 ## Commands
 
+The easiest way in is the form: run `/observe` without options (or press **New Observe** under `/list`). It asks for name, page, text, mode and an optional CSS selector, then shows a preview - a screenshot and the text the bot found - where you pick how often to check, where to be notified and whether to keep watching after a change. Nothing is saved until you press **Start watching**. The **Edit** button on any Observe opens the same form, filled in.
+
 | Command | |
 |---|---|
-| `/observe` | Watch a page. Checks it once right away and shows what the bot sees |
+| `/observe` | Watch a page. Without options it opens a form (see below); with `name` and `url` it saves right away. Either way the page is checked once and you see what the bot sees |
 | `/preview` | Try out url/text/selector/mode without saving anything |
 | `/list` | Your Observes; `name:` shows one in detail |
-| `/edit` | Change an Observe - only the options you fill in. A changed target is checked before it's saved |
+| `/edit` | Change an Observe - only the options you fill in, or just `current-name` for the form. A changed target is checked before it's saved |
 | `/scrape` | Check an Observe right now |
 | `/history` | The last checks of an Observe: outcome, HTTP status, duration |
 | `/pause`, `/reactivate` | Stop / resume checking |
@@ -44,7 +46,7 @@ The image is published as `ghcr.io/kounex/update-day`. Example compose file:
 ```yaml
 services:
   update-day:
-    image: ghcr.io/kounex/update-day:0.13.1
+    image: ghcr.io/kounex/update-day:0.14.0
     restart: unless-stopped
     volumes:
       - ./data:/data   # must be writable by uid/gid 997
