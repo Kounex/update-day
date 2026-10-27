@@ -22,7 +22,8 @@ const INVITE_PERMISSIONS = 1024 + 2048 + 16384 + 32768;
 export default class {
   private readonly shouldRegisterCommandsOnBot: boolean;
   private readonly commandsByName!: Collection<string, Command>;
-  private readonly commandsByButtonId!: Collection<string, Command>;
+  private readonly commandsByComponentId!: Collection<string, Command>;
+  private readonly commandsByModalId!: Collection<string, Command>;
 
   constructor(
     @inject(TYPES.Client) private readonly client: Client,
@@ -30,7 +31,8 @@ export default class {
   ) {
     this.shouldRegisterCommandsOnBot = config.REGISTER_COMMANDS_ON_BOT;
     this.commandsByName = new Collection();
-    this.commandsByButtonId = new Collection();
+    this.commandsByComponentId = new Collection();
+    this.commandsByModalId = new Collection();
   }
 
   public async register(): Promise<void> {
@@ -50,10 +52,12 @@ export default class {
         this.commandsByName.set(command.slashCommand.name, command);
       }
 
-      if (command.handledButtonIds) {
-        for (const buttonId of command.handledButtonIds) {
-          this.commandsByButtonId.set(buttonId, command);
-        }
+      for (const prefix of command.handledComponentIds ?? []) {
+        this.commandsByComponentId.set(prefix, command);
+      }
+
+      for (const prefix of command.handledModalIds ?? []) {
+        this.commandsByModalId.set(prefix, command);
       }
     }
 
@@ -82,18 +86,25 @@ export default class {
           }
 
           await command.execute(interaction);
-        } else if (interaction.isButton()) {
-          // handledButtonIds entries are prefixes, not exact IDs - a button
-          // needing per-interaction data (e.g. which Observe) encodes it as
-          // `${prefix}${data}` in its own customId. Buttons also arrive from
-          // DMs (notifications); handlers check ownership themselves.
-          const command = this.commandsByButtonId.find((_command, prefix) =>
+        } else if (interaction.isButton() || interaction.isStringSelectMenu()) {
+          // handledComponentIds entries are prefixes, not exact IDs - a
+          // component needing per-interaction data (e.g. which Observe)
+          // encodes it as `${prefix}${data}` in its own customId. Buttons also
+          // arrive from DMs (notifications); handlers check ownership.
+          const command = this.commandsByComponentId.find((_command, prefix) =>
             interaction.customId.startsWith(prefix)
           );
 
-          if (command?.handleButtonInteraction) {
-            await command.handleButtonInteraction(interaction);
+          if (interaction.isButton()) {
+            await command?.handleButtonInteraction?.(interaction);
+          } else {
+            await command?.handleSelectMenuInteraction?.(interaction);
           }
+        } else if (interaction.isModalSubmit()) {
+          const command = this.commandsByModalId.find((_command, prefix) =>
+            interaction.customId.startsWith(prefix)
+          );
+          await command?.handleModalSubmitInteraction?.(interaction);
         } else if (interaction.isAutocomplete()) {
           if (
             !interaction.guildId ||
@@ -114,8 +125,8 @@ export default class {
           `Interaction ${
             interaction.isCommand()
               ? `/${interaction.commandName}`
-              : interaction.isButton()
-                ? `button ${interaction.customId}`
+              : interaction.isMessageComponent() || interaction.isModalSubmit()
+                ? `component ${interaction.customId}`
                 : String(interaction.type)
           } failed`,
           error
@@ -124,14 +135,14 @@ export default class {
         // This can fail if the message was deleted, and we don't want to crash the whole bot
         try {
           if (
-            (interaction.isCommand() || interaction.isButton()) &&
+            interaction.isRepliable() &&
             (interaction.replied || interaction.deferred)
           ) {
             await interaction.followUp({
               content: errorMsg(error as Error),
               flags: MessageFlags.Ephemeral,
             });
-          } else if (interaction.isCommand() || interaction.isButton()) {
+          } else if (interaction.isRepliable()) {
             await interaction.reply({
               content: errorMsg(error as Error),
               flags: MessageFlags.Ephemeral,

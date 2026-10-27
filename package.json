@@ -1,6 +1,6 @@
 {
   "name": "update-day",
-  "version": "0.13.1",
+  "version": "0.14.0",
   "description": "A Discord bot to notify you about website changes",
   "repository": "git@github.com:Kounex/update-day.git",
   "author": "Kounex <r.schramowski@googlemail.com>",
@@ -116,7 +116,13 @@
           "src/**/*.test.ts"
         ],
         "rules": {
-          "@typescript-eslint/no-floating-promises": "off"
+          "@typescript-eslint/no-floating-promises": "off",
+          "@typescript-eslint/no-unsafe-return": "off",
+          "@typescript-eslint/no-unsafe-assignment": "off",
+          "@typescript-eslint/no-unsafe-call": "off",
+          "@typescript-eslint/no-unsafe-member-access": "off",
+          "@typescript-eslint/no-unsafe-argument": "off",
+          "@typescript-eslint/no-explicit-any": "off"
         }
       }
     ]

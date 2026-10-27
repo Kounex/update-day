@@ -30,7 +30,7 @@ export default class implements Command {
         .setRequired(true)
     );
 
-  public readonly handledButtonIds = [BUTTON_KEEP_WATCHING] as const;
+  public readonly handledComponentIds = [BUTTON_KEEP_WATCHING] as const;
 
   constructor(
     @inject(TYPES.Managers.Observe)

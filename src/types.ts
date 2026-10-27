@@ -4,6 +4,8 @@ export const TYPES = {
   Client: Symbol('Client'),
   Config: Symbol('Config'),
   Managers: {
+    Drafts: Symbol('Drafts'),
+    FormFlow: Symbol('FormFlow'),
     Observe: Symbol('Observe'),
     Scheduler: Symbol('Scheduler'),
   },

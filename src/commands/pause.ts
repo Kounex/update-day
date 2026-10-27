@@ -30,7 +30,7 @@ export default class implements Command {
         .setRequired(true)
     );
 
-  public readonly handledButtonIds = [BUTTON_PAUSE] as const;
+  public readonly handledComponentIds = [BUTTON_PAUSE] as const;
 
   constructor(
     @inject(TYPES.Managers.Observe)

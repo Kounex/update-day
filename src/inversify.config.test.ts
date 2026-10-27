@@ -48,14 +48,17 @@ describe('dependency injection', () => {
     }
   });
 
-  it('routes every button prefix to exactly one command', () => {
-    const prefixes = container
-      .getAll<Command>(TYPES.Command)
-      .flatMap((command) => command.handledButtonIds ?? []);
-    assert.equal(new Set(prefixes).size, prefixes.length);
-    for (const prefix of prefixes) {
-      const overlapping = prefixes.filter((other) => other !== prefix && other.startsWith(prefix));
-      assert.deepEqual(overlapping, [], `${prefix} shadows ${overlapping.join(', ')}`);
+  it('routes every component and modal prefix to exactly one command', () => {
+    const commands = container.getAll<Command>(TYPES.Command);
+    for (const prefixes of [
+      commands.flatMap((command) => command.handledComponentIds ?? []),
+      commands.flatMap((command) => command.handledModalIds ?? []),
+    ]) {
+      assert.equal(new Set(prefixes).size, prefixes.length);
+      for (const prefix of prefixes) {
+        const overlapping = prefixes.filter((other) => other !== prefix && other.startsWith(prefix));
+        assert.deepEqual(overlapping, [], `${prefix} shadows ${overlapping.join(', ')}`);
+      }
     }
   });
 });

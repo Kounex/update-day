@@ -6,6 +6,8 @@ import Config from './config.js';
 import { TYPES } from './types.js';
 
 // Managers
+import DraftStore from './managers/drafts.js';
+import FormFlow from './managers/form-flow.js';
 import ObserveManager from './managers/observe.js';
 import SchedulerManager from './managers/scheduler.js';
 
@@ -43,6 +45,14 @@ container.bind<Client>(TYPES.Client).toConstantValue(new Client({ intents }));
 container
   .bind<SchedulerManager>(TYPES.Managers.Scheduler)
   .to(SchedulerManager)
+  .inSingletonScope();
+container
+  .bind<DraftStore>(TYPES.Managers.Drafts)
+  .to(DraftStore)
+  .inSingletonScope();
+container
+  .bind<FormFlow>(TYPES.Managers.FormFlow)
+  .to(FormFlow)
   .inSingletonScope();
 container
   .bind<ObserveManager>(TYPES.Managers.Observe)

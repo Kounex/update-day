@@ -38,7 +38,7 @@ export default class implements Command {
 
   // BUTTON_DELETE is the "Delete…" button on notifications and listings - it
   // leads to the same confirmation as the command.
-  public readonly handledButtonIds = [
+  public readonly handledComponentIds = [
     CONFIRM_PREFIX,
     CANCEL_PREFIX,
     BUTTON_DELETE,

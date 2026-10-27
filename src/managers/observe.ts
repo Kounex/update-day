@@ -141,7 +141,12 @@ export default class ObserveManager {
     });
   }
 
-  public async addObserve(observe: Observe): Promise<ValidationResult> {
+  public async addObserve(
+    observe: Observe,
+    // A fresh check of this exact target (the form's preview) - reused
+    // instead of loading the page again.
+    options: { scrapeResult?: ScrapeResult } = {}
+  ): Promise<ValidationResult> {
     const limitProblem = await this.checkObservesLimit(
       observe.guildId,
       observe.userId
@@ -157,7 +162,9 @@ export default class ObserveManager {
       };
     }
 
-    const scrapeResult = await this.preview(observe.guildId, targetOf(observe));
+    const scrapeResult =
+      options.scrapeResult ??
+      (await this.preview(observe.guildId, targetOf(observe)));
     const validation = this.validate(observe, scrapeResult);
     if (!validation.successful) {
       return { ...validation, scrapeResult };
@@ -392,7 +399,8 @@ export default class ObserveManager {
       notifyMode?: string;
       scrapeInterval?: string;
       keepActive?: boolean;
-    }
+    },
+    options: { scrapeResult?: ScrapeResult } = {}
   ): Promise<ValidationResult> {
     const current = await this.findByName(guildId, userId, name);
     if (!current) {
@@ -413,7 +421,7 @@ export default class ObserveManager {
 
     this.inFlight.add(current.id);
     try {
-      return await this.applyEdit(current, edits);
+      return await this.applyEdit(current, edits, options);
     } finally {
       this.inFlight.delete(current.id);
     }
@@ -421,7 +429,8 @@ export default class ObserveManager {
 
   private async applyEdit(
     current: Observe,
-    edits: Parameters<ObserveManager['editObserve']>[3]
+    edits: Parameters<ObserveManager['editObserve']>[3],
+    options: { scrapeResult?: ScrapeResult }
   ): Promise<ValidationResult> {
     const { guildId, userId } = current;
     const newName = edits.name?.trim() ?? current.name;
@@ -471,7 +480,9 @@ export default class ObserveManager {
     // A different target needs to work - and a new baseline - before it's
     // saved; otherwise a typo turns into a bogus "change found" next check.
     if (!updated.hasSameTarget(current)) {
-      scrapeResult = await this.preview(guildId, targetOf(updated));
+      scrapeResult =
+        options.scrapeResult ??
+        (await this.preview(guildId, targetOf(updated)));
       const validation = this.validate(updated, scrapeResult);
       if (!validation.successful) {
         // The unsaved version, so the reply can show what was tried.

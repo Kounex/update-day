@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0]
+
+### Added
+
+- A form for creating Observes: `/observe` without options (or **New Observe** under `/list`) opens it - name, page, text, mode and CSS selector. Submitting it shows a preview (screenshot and the text the bot found) with dropdowns for the check interval and where to notify, a keep-active toggle, and **Start watching**; nothing is saved before that. If the page doesn't fit (e.g. the text isn't there), saving stays disabled and **Edit form** reopens the form with what you entered.
+- An **Edit** button on Observe details and notifications that opens the same form, filled in - `/edit` with only `current-name` does the same.
+- Saving right after the preview reuses its check instead of loading the page again.
+
+### Changed
+
+- `/observe`'s `name` and `url` options are optional now; giving only some options opens the form pre-filled with them.
+
 ## [0.13.1]
 
 ### Changed
