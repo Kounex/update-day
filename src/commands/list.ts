@@ -2,11 +2,13 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
 import {
+  actionRow,
   buildCommandResultEmbed,
   buildObserveEmbed,
   buildObserveListEmbed,
@@ -54,35 +56,40 @@ export default class implements Command {
     const activeOnly = interaction.options.getBoolean('active-only') ?? true;
     const compact = interaction.options.getBoolean('compact') ?? true;
 
-    const observes = await this.observeManager.getObserves({
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    });
-
-    if (name == null) {
+    if (name === null) {
+      const observes = await this.observeManager.getObserves({
+        guildId: interaction.guildId!,
+        userId: interaction.user.id,
+      });
       await interaction.reply({
         embeds: [buildObserveListEmbed(observes, activeOnly, compact)],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const observe = await this.observeManager.findByName(
+      interaction.guildId!,
+      interaction.user.id,
+      name
+    );
+
+    if (observe) {
+      await interaction.reply({
+        embeds: [buildObserveEmbed(observe, { color: 'DarkBlue' })],
+        components: [actionRow(observe)],
+        flags: MessageFlags.Ephemeral,
       });
     } else {
-      const observe = observes.find((observe) => observe.name == name);
-
-      if (!!observe) {
-        await interaction.reply({
-          embeds: [buildObserveEmbed(observe, { color: 'DarkBlue' })],
-          ephemeral: true,
-        });
-      } else {
-        await interaction.reply({
-          embeds: [
-            buildCommandResultEmbed({
-              successful: false,
-              message: `You don't have an Observe with the name \`${name}\`! Make use of autocomplete to choose an existing Observe or take a look at all your Observes by using this command without providing a name.`,
-            }),
-          ],
-          ephemeral: true,
-        });
-      }
+      await interaction.reply({
+        embeds: [
+          buildCommandResultEmbed({
+            successful: false,
+            message: `You don't have an Observe called \`${name}\`. Pick one from the suggestions, or leave \`name\` empty to see all of them.`,
+          }),
+        ],
+        flags: MessageFlags.Ephemeral,
+      });
     }
   }
 

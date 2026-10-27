@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0]
+
+Reliability, security and convenience overhaul.
+
+### Added
+
+- Watch modes: `Text disappears` (the previous behavior, still the default), `Text appears`, and `Content changes` (notifies when the text inside a CSS selector changes, showing before and after).
+- Notifications carry a screenshot of what the bot saw and buttons: Open page, Keep watching / Pause, Delete.
+- `notify` option on `/observe` and `/edit`: direct message (default), channel, or both. `/settings set-notify-channel` picks a server-wide channel; otherwise it's the channel the Observe was created in.
+- `/preview` - see what the bot sees on a page (snippet and screenshot) and whether it would work as an Observe, without saving anything. `/observe` and `/edit` show the same view of their first check.
+- `/history` - the last checks of an Observe with outcome, HTTP status and duration (the last 50 are kept per Observe).
+- `/pause` - stop checking an Observe without deleting it; `/reactivate` resumes it.
+- `/admin status` - version, uptime, Discord latency, scheduler and browser health, the last 24 hours of checks, and failing Observes.
+- `ALLOWED_GUILD_IDS` - restrict the bot to your own servers; it leaves any other server it gets invited to.
+- Container `HEALTHCHECK`, and a watchdog that restarts the process if Discord stays disconnected for 10 minutes or the scheduler hangs.
+- Optional Chrome sandbox (`CHROME_SANDBOX=true` with a seccomp profile from `deploy/make-chrome-seccomp.mjs`).
+
+### Changed
+
+- A suspected change is confirmed by a second, fresh page load before anyone is notified.
+- The bot waits for the page's network to settle and gives late-rendered text a few seconds before deciding it's gone.
+- Text matching also ignores differences in whitespace and line breaks.
+- Notifications fire on transitions: a `keep-active` Observe notifies once per change (instead of on every check while the change lasts) and re-arms itself when the page goes back.
+- `/reactivate` (and Keep watching) no longer re-notifies about the change that was already reported.
+- One shared Chrome with a concurrency limit (`SCRAPE_CONCURRENCY`, default 2) instead of a new browser process per check; it restarts itself periodically and after crashes.
+- Next-check times have a little random jitter and are stored, so checks don't all fire at once after a restart.
+- `/edit` checks a changed URL, text, selector or mode before saving it, and takes a new starting point from that check.
+- Names are limited to 50 characters; text, selector and URL have length limits too.
+- Warnings and errors are always logged (previously only with `DEBUG` set); stack traces point at the TypeScript sources.
+- Smaller image: Chrome's dependencies are installed directly instead of via a second, unused Chrome. The container user is pinned to uid/gid 997.
+- Discord timestamps (shown in each viewer's own timezone) in Observe details.
+
+### Fixed
+
+- HTTP error pages, bot-check/challenge pages and a missing CSS selector were reported as "a change has been found" (and deactivated the Observe), since the watched text was of course not on them.
+- Pages rendering their content with JavaScript after loading could trigger a false change.
+- A `keep-active` Observe DMed the same change on every single check.
+- A notification that couldn't be delivered (DMs closed) was silently lost - and the Observe deactivated anyway.
+- Anyone able to run `/observe` could make the bot open addresses on the network it runs in (`localhost`, LAN, cloud metadata), including through redirects and sub-requests, and learn from the reply whether a text was on such a page. These addresses are now refused.
+- Autocomplete broke for everyone with more than 25 Observes, and `/edit`'s suggestions for URLs longer than 100 characters.
+- `/delete` failed for Observes with long names (button ids over Discord's 100-character limit).
+- `/edit` could save a target that doesn't work, which then reported a bogus change.
+- Favicons hosted on another domain or given as relative paths were turned into broken URLs.
+- `/settings notify-on-first-timeout` said "true by default" - it's false. With a failed-check limit of 1, users got the "will retry" message instead of "deactivated".
+- Chrome could crash on larger pages because of Docker's small `/dev/shm`.
+- `--enable-source-maps` was passed to the script instead of Node, so it never did anything.
+- The bot kept checking Observes of servers it had been removed from.
+
 ## [0.12.4]
 
 ### Changed

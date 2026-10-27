@@ -1,39 +1,7 @@
-import Config from '../config.js';
-import container from '../inversify.config.js';
-import { TYPES } from '../types.js';
+import { TIMEZONE } from '../config.js';
 
-export const prettyTime = (seconds: number): string => {
-  const nSeconds = seconds % 60;
-  let nMinutes = Math.floor(seconds / 60);
-  const nHours = Math.floor(nMinutes / 60);
-
-  let res = '';
-
-  if (nHours !== 0) {
-    res += `${Math.round(nHours).toString().padStart(2, '0')}:`;
-    nMinutes -= nHours * 60;
-  }
-
-  res += `${Math.round(nMinutes).toString().padStart(2, '0')}:${Math.round(
-    nSeconds
-  )
-    .toString()
-    .padStart(2, '0')}`;
-
-  return res;
-};
-
-export const parseTime = (str: string): number =>
-  str.split(':').reduce((acc, time) => 60 * acc + parseInt(time, 10), 0);
-
-export const prettyDateTime = (ms: number): string => {
-  const config = container.get<Config>(TYPES.Config);
-
-  // Create a new Date object from the timestamp
-  const date = new Date(ms);
-
-  // Options for the date and time formatting
-  const options: Intl.DateTimeFormatOptions = {
+export const prettyDateTime = (ms: number): string =>
+  new Date(ms).toLocaleDateString('de-DE', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -41,11 +9,30 @@ export const prettyDateTime = (ms: number): string => {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-    timeZone: config.TIMEZONE,
-  };
+    timeZone: TIMEZONE,
+  });
 
-  // Use the toLocaleDateString method with 'de-DE' locale for German format
-  const formattedDate = date.toLocaleDateString('de-DE', options);
+// Discord renders these in each viewer's own timezone and locale.
+export const discordTime = (
+  ms: number | bigint,
+  style: 'R' | 'f' | 'F' | 't' | 'T' | 'd' | 'D' = 'f'
+): string => `<t:${Math.floor(Number(ms) / 1000)}:${style}>`;
 
-  return formattedDate;
+export const prettyDuration = (ms: number): string => {
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m ${seconds % 60}s`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours}h ${minutes % 60}m`;
+  }
+
+  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
 };

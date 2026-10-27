@@ -8,6 +8,8 @@ export const TYPES = {
     Scheduler: Symbol('Scheduler'),
   },
   Services: {
+    Browser: Symbol('Browser'),
+    Notifier: Symbol('Notifier'),
     Scrape: Symbol('Scrape'),
     Settings: Symbol('Settings'),
   },

@@ -25,10 +25,10 @@ WORKDIR /usr/app
 COPY package.json .
 COPY yarn.lock .
 
-RUN yarn install --prod
+RUN yarn install --prod --frozen-lockfile
 RUN cp -R node_modules /usr/app/prod_node_modules
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 FROM dependencies AS builder
 
@@ -38,10 +38,16 @@ RUN yarn prisma generate
 RUN yarn build
 
 # Only keep what's necessary to run
-# FROM registry.access.redhat.com/ubi8/nodejs-18 AS runner
 FROM base AS runner
 
 WORKDIR /usr/app
+
+# The unprivileged user everything (including Chrome) runs as. Created first and with a
+# fixed uid/gid, so no package installed below can take 997 - existing installs keep their
+# data dir owned by 997:997 on the host, and a different uid would lock the bot out of it.
+RUN groupadd -r -g 997 pptruser && useradd -r -u 997 -g pptruser -G audio,video pptruser \
+    && mkdir -p /home/pptruser/Downloads \
+    && chown -R pptruser:pptruser /home/pptruser
 
 COPY --from=builder /usr/app/dist ./dist
 COPY --from=dependencies /usr/app/prod_node_modules node_modules
@@ -49,45 +55,40 @@ COPY --from=builder /usr/app/node_modules/.prisma/client ./node_modules/.prisma/
 
 COPY . .
 
-# ARG COMMIT_HASH=unknown
-# ARG BUILD_DATE=unknown
+ARG COMMIT_HASH=unknown
+ARG BUILD_DATE
 
-ENV DATA_DIR /data
-ENV NODE_ENV production
-# ENV COMMIT_HASH $COMMIT_HASH
-# ENV BUILD_DATE $BUILD_DATE
+ENV DATA_DIR=/data
+ENV NODE_ENV=production
+ENV COMMIT_HASH=$COMMIT_HASH
+ENV BUILD_DATE=$BUILD_DATE
+# Shared location (not root's home), readable by pptruser at runtime.
+ENV PUPPETEER_CACHE_DIR=/usr/app/.cache/puppeteer
 
-# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
-# Note: this does NOT get used as the browser puppeteer launches - it's here purely to pull in
-# the shared libs (libnss3, libatk, libgtk, etc.) that the Chrome for Testing build Puppeteer
-# downloads below actually needs to run headless. See the puppeteer.launch() call in
-# src/services/scrape.ts, which uses Puppeteer's own managed browser, not this one.
-
+# Fonts for major non-Latin scripts (Chinese, Japanese, Arabic, Hebrew, Thai, ...), so
+# pages using them render their text - and screenshots don't show boxes. Plus unzip, which
+# Puppeteer unpacks the Chrome download with.
 RUN apt-get update \
-    && apt-get install -y wget gnupg \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 unzip \
-    --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
+    fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Create the unprivileged user everything (including Puppeteer's browser) runs as.
-RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
-    && mkdir -p /home/pptruser/Downloads \
-    && chown -R pptruser:pptruser /home/pptruser \
-    && chown -R pptruser:pptruser ./node_modules \
-    && chown -R pptruser:pptruser ./package.json
+# Download the Chrome build Puppeteer launches, plus exactly the system libraries it needs
+# (--install-deps), at build time - instead of on every container start, and instead of
+# installing a whole second browser (google-chrome-stable) just for its dependencies.
+ENV PUPPETEER_SKIP_DOWNLOAD=false
+RUN apt-get update \
+    && npx puppeteer browsers install chrome --install-deps \
+    && rm -rf /var/lib/apt/lists/* \
+    && chown -R pptruser:pptruser ./node_modules ./package.json /usr/app/.cache
 
 # Run everything after as non-privileged user.
 USER pptruser
 
-# Download the Chrome build Puppeteer actually launches at build time, into pptruser's own
-# cache dir, instead of on every container start. Previously this ran as part of CMD on every
-# boot, which was slow and meant a network hiccup at startup would crash-loop the bot.
-# (Override the base stage's PUPPETEER_SKIP_DOWNLOAD=true - we do want this one, explicit, download.)
-ENV PUPPETEER_SKIP_DOWNLOAD=false
-RUN npx puppeteer browsers install chrome
+# The scheduler writes a timestamp every 15 s while it runs and Discord is connected.
+HEALTHCHECK --interval=60s --timeout=10s --start-period=3m --retries=3 \
+    CMD ["node", "-e", "const t = Number(require('fs').readFileSync(process.env.HEARTBEAT_FILE || '/tmp/update-day-heartbeat', 'utf8')); process.exit(Date.now() - t < 180000 ? 0 : 1)"]
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["node", "dist/scripts/migrate-and-start.js", "--enable-source-maps"]
+CMD ["node", "--enable-source-maps", "dist/scripts/migrate-and-start.js"]

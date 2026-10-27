@@ -12,5 +12,5 @@ export default (error?: string | Error): string => {
     return `🚫 ope: ${error}`;
   }
 
-  return "🚫 ope: something went wrong on our end. This has been logged - please try again, or reach out if it keeps happening.";
+  return '🚫 ope: something went wrong on our end. This has been logged - please try again, or reach out if it keeps happening.';
 };

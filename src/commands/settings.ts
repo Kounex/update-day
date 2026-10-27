@@ -1,5 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { ChatInputCommandInteraction, PermissionFlagsBits } from 'discord.js';
+import {
+  ChannelType,
+  ChatInputCommandInteraction,
+  Client,
+  MessageFlags,
+  PermissionFlagsBits,
+} from 'discord.js';
 import { inject, injectable } from 'inversify';
 import SettingsService from '../services/settings.js';
 import { TYPES } from '../types.js';
@@ -43,7 +49,7 @@ export default class implements Command {
       subcommand
         .setName('set-timeout')
         .setDescription(
-          'Set the time the scraper will wait before hitting a timeout (in seconds)'
+          'How long a page may take to load before the check counts as failed (in seconds)'
         )
         .addIntegerOption((option) =>
           option
@@ -58,12 +64,12 @@ export default class implements Command {
       subcommand
         .setName('set-timeout-limit')
         .setDescription(
-          'Sets the maximum amount of consecutive timeouts for Observes until they get deactivated'
+          'How many failed checks in a row deactivate an Observe'
         )
         .addIntegerOption((option) =>
           option
             .setName('limit')
-            .setDescription('Maximum consecutive timeouts per Observe')
+            .setDescription('Failed checks in a row')
             .setMinValue(1)
             .setRequired(true)
         )
@@ -72,12 +78,12 @@ export default class implements Command {
       subcommand
         .setName('timeouts-till-notify')
         .setDescription(
-          'Sets the amount of cumulative timeouts for Observes until users get notified'
+          'After how many failed checks in total users get a heads-up'
         )
         .addIntegerOption((option) =>
           option
             .setName('amount')
-            .setDescription('Cumulative timeouts per Observe')
+            .setDescription('Failed checks in total')
             .setMinValue(1)
             .setRequired(true)
         )
@@ -86,27 +92,40 @@ export default class implements Command {
       subcommand
         .setName('notify-on-first-timeout')
         .setDescription(
-          'If you want the bot to notify users about a timeout (without hitting the limit), true by default'
+          'Notify users about a first failed check (not just at the limit) - false by default'
         )
         .addBooleanOption((option) =>
           option
             .setName('notify')
-            .setDescription('Should notify on first timeout')
+            .setDescription('Should notify on the first failed check')
             .setRequired(true)
         )
     )
-
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('set-notify-channel')
+        .setDescription(
+          'Channel for channel notifications - leave empty to use the channel each Observe was created in'
+        )
+        .addChannelOption((option) =>
+          option
+            .setName('channel')
+            .setDescription('Text channel to post notifications in')
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+        )
+    )
     .addSubcommand((subcommand) =>
       subcommand.setName('list').setDescription('Show all settings')
     );
 
   constructor(
     @inject(TYPES.Services.Settings)
-    private readonly settingsService: SettingsService
+    private readonly settingsService: SettingsService,
+    @inject(TYPES.Client)
+    private readonly client: Client
   ) {}
 
   async execute(interaction: ChatInputCommandInteraction) {
-    // Ensure guild settings exist before trying to update
     const settings = await this.settingsService.getSettings(
       interaction.guildId!
     );
@@ -126,7 +145,7 @@ export default class implements Command {
               message: `New Observe limit for guilds has been set to \`${limit}\``,
             }),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         break;
@@ -146,7 +165,7 @@ export default class implements Command {
               message: `New Observe limit for users has been set to \`${limit}\``,
             }),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         break;
@@ -156,17 +175,17 @@ export default class implements Command {
         const timeout = interaction.options.getInteger('timeout')!;
 
         await this.settingsService.updateSettings(interaction.guildId!, {
-          timeout: timeout,
+          timeout,
         });
 
         await interaction.reply({
           embeds: [
             buildCommandResultEmbed({
               successful: true,
-              message: `New Observe timeout has been set to \`${timeout} seconds\``,
+              message: `Pages may now take up to \`${timeout} seconds\` to load.`,
             }),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         break;
@@ -183,10 +202,10 @@ export default class implements Command {
           embeds: [
             buildCommandResultEmbed({
               successful: true,
-              message: `New Observe consecutive timeout limit has been set to \`${limit}\``,
+              message: `Observes are now deactivated after \`${limit}\` failed checks in a row.`,
             }),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         break;
@@ -203,10 +222,10 @@ export default class implements Command {
           embeds: [
             buildCommandResultEmbed({
               successful: true,
-              message: `User will now get notified when their Observes hit \`${amount}\` cumulative timeouts!`,
+              message: `Users now get a heads-up once an Observe has failed \`${amount}\` checks in total.`,
             }),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         break;
@@ -224,11 +243,55 @@ export default class implements Command {
             buildCommandResultEmbed({
               successful: true,
               message: notify
-                ? `The bot will now notify users about a first timeout of their Observes!`
-                : `The bot won't notify users about timeouts of their Observe, only once they hit the consecutive limit and their Observe will be deactivated!`,
+                ? 'Users are now notified about the first failed check of an Observe.'
+                : 'Users are only notified about failed checks once an Observe gets deactivated (or hits the total limit).',
             }),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
+        });
+
+        break;
+      }
+
+      case 'set-notify-channel': {
+        const channel = interaction.options.getChannel('channel');
+        if (channel) {
+          const guildChannel = await interaction.guild!.channels.fetch(channel.id);
+          const canPost = guildChannel
+            ?.permissionsFor(this.client.user!)
+            ?.has([
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.EmbedLinks,
+            ]);
+          if (!canPost) {
+            await interaction.reply({
+              embeds: [
+                buildCommandResultEmbed({
+                  successful: false,
+                  message: `I can't post in <#${channel.id}> - give me View Channel, Send Messages and Embed Links there first (Attach Files too, for screenshots).`,
+                }),
+              ],
+              flags: MessageFlags.Ephemeral,
+            });
+            break;
+          }
+        }
+
+        await this.settingsService.updateSettings(interaction.guildId!, {
+          notifyChannelId: channel?.id ?? null,
+        });
+
+        await interaction.reply({
+          embeds: [
+            buildCommandResultEmbed({
+              successful: true,
+              message: channel
+                ? `Channel notifications now go to <#${channel.id}>.`
+                : 'Channel notifications now go to the channel each Observe was created in.',
+            }),
+          ],
+          flags: MessageFlags.Ephemeral,
         });
 
         break;
@@ -237,7 +300,7 @@ export default class implements Command {
       case 'list': {
         await interaction.reply({
           embeds: [buildSettingsEmbed(settings)],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         break;

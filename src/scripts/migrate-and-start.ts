@@ -1,7 +1,7 @@
 // This script applies Prisma migrations
 // and then starts the bot.
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
 
 import Prisma from '@prisma/client';
 import { execa, ExecaError } from 'execa';
@@ -16,8 +16,7 @@ import logBanner from '../utils/log-banner.js';
 
 const client = new Prisma.PrismaClient();
 
-process.env.DATABASE_URL =
-  process.env.DATABASE_URL ?? createDatabaseUrl(DATA_DIR);
+process.env.DATABASE_URL ??= createDatabaseUrl(DATA_DIR);
 
 const migrateFromSequelizeToPrisma = async () => {
   await execa(

@@ -5,8 +5,7 @@ import { startBot } from '../index.js';
 import createDatabaseUrl from '../utils/create-database-url.js';
 import logBanner from '../utils/log-banner.js';
 
-process.env.DATABASE_URL =
-  process.env.DATABASE_URL ?? createDatabaseUrl(DATA_DIR);
+process.env.DATABASE_URL ??= createDatabaseUrl(DATA_DIR);
 
 (async () => {
   logBanner();

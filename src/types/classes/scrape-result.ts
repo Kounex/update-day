@@ -1,49 +1,76 @@
-import { Observe } from '../models/observe.js';
-
-export enum ScrapeResultType {
-  Change,
-  NoChange,
-  ElementNotFound,
-  TextNotFound,
-  Timeout,
-  Unknown,
+export enum ScrapeFailure {
+  // Navigation or waiting ran out of time
+  Timeout = 'Timeout',
+  // DNS failure, connection refused/reset, TLS error, ...
+  Unreachable = 'Unreachable',
+  // The server answered, but with 4xx/5xx
+  HttpError = 'HttpError',
+  // Bot protection / challenge page instead of the real content
+  Blocked = 'Blocked',
+  // The CSS selector matched nothing
+  ElementNotFound = 'ElementNotFound',
+  // Refused by the network guard (private/local address)
+  NetworkBlocked = 'NetworkBlocked',
+  // Chrome itself failed (crash, launch error, ...)
+  BrowserError = 'BrowserError',
 }
-export class ScrapeResult {
-  constructor(
-    public readonly observe: Observe,
-    public readonly type: ScrapeResultType
-  ) {}
 
-  public get successful(): boolean {
-    return (
-      this.type == ScrapeResultType.Change ||
-      this.type == ScrapeResultType.NoChange
-    );
-  }
+interface ScrapeResultBase {
+  httpStatus: number | null;
+  durationMS: number;
+  finalUrl: string;
+  title: string;
+  screenshot?: Buffer;
+}
 
-  public get message(): string {
-    switch (this.type) {
-      case ScrapeResultType.Change: {
-        return 'Change detected, user should be notified!';
-      }
-      case ScrapeResultType.NoChange: {
-        return 'No change detected.';
-      }
-      case ScrapeResultType.ElementNotFound: {
-        return `Element with given CSS-Selector \`${this.observe.cssSelector}\` on website \`${this.observe.url}\` not found!`;
-      }
-      case ScrapeResultType.TextNotFound: {
-        const where = this.observe.cssSelector
-          ? `within \`${this.observe.cssSelector}\` `
-          : '';
-        return `Text \`${this.observe.watchText}\` not currently found ${where}on website \`${this.observe.url}\`! Make sure it's an exact match of what's shown on the page right now.`;
-      }
-      case ScrapeResultType.Timeout: {
-        return `Your Observe \`${this.observe.name}\` on \`${this.observe.url}\` ran into a timeout!`;
-      }
-      case ScrapeResultType.Unknown: {
-        return `Unknown, not handled error occurred while trying to scrape:\n$observe`;
-      }
+export interface ScrapeSuccess extends ScrapeResultBase {
+  ok: true;
+  // Visible text of the selector's element (or the whole page)
+  text: string;
+  // Whether the watched text was found - null when there's no watched text
+  matchFound: boolean | null;
+  thumbnail: string | null;
+}
+
+export interface ScrapeError extends ScrapeResultBase {
+  ok: false;
+  failure: ScrapeFailure;
+  detail: string;
+}
+
+export type ScrapeResult = ScrapeSuccess | ScrapeError;
+
+export const failureText = (
+  failure: ScrapeFailure,
+  options: { cssSelector?: string | null; httpStatus?: number | null } = {}
+): string => {
+  switch (failure) {
+    case ScrapeFailure.Timeout: {
+      return 'the page took too long to load';
+    }
+
+    case ScrapeFailure.Unreachable: {
+      return 'the site could not be reached';
+    }
+
+    case ScrapeFailure.HttpError: {
+      return `the site answered with an error (HTTP ${options.httpStatus ?? '?'})`;
+    }
+
+    case ScrapeFailure.Blocked: {
+      return 'the site showed a bot check / challenge page instead of its content';
+    }
+
+    case ScrapeFailure.ElementNotFound: {
+      return `nothing on the page matched the CSS selector \`${options.cssSelector ?? ''}\``;
+    }
+
+    case ScrapeFailure.NetworkBlocked: {
+      return 'the address points to a private or local network, which this bot is not allowed to open';
+    }
+
+    case ScrapeFailure.BrowserError: {
+      return 'the browser ran into an internal error';
     }
   }
-}
+};
