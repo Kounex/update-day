@@ -324,7 +324,14 @@ export default class ScrapeService {
       if (allowed) {
         await request.continue();
       } else {
-        logger.warn(`Blocked request to a private/local address: ${url}`);
+        if (request.isNavigationRequest()) {
+          logger.warn(`Blocked navigation to a private/local address: ${url}`);
+        } else {
+          // Routine with an ad-blocking DNS, which answers trackers with
+          // 0.0.0.0 - the page itself still loads fine.
+          logger.debug(`Blocked sub-request to a private/local address: ${url}`);
+        }
+
         onBlocked(url);
         await request.abort('blockedbyclient');
       }

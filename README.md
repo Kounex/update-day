@@ -44,7 +44,7 @@ The image is published as `ghcr.io/kounex/update-day`. Example compose file:
 ```yaml
 services:
   update-day:
-    image: ghcr.io/kounex/update-day:0.13.0
+    image: ghcr.io/kounex/update-day:0.13.1
     restart: unless-stopped
     volumes:
       - ./data:/data   # must be writable by uid/gid 997
