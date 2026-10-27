@@ -2,15 +2,18 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
+  ColorResolvable,
+  MessageFlags,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
-import ObserveManager from '../managers/observe.js';
+import ObserveManager, { CheckOutcome } from '../managers/observe.js';
 import { TYPES } from '../types.js';
-import { ScrapeResultType } from '../types/classes/scrape-result.js';
+import { failureText } from '../types/classes/scrape-result.js';
 import {
-  EmbedOptions,
+  actionRow,
   buildCommandResultEmbed,
   buildObserveEmbed,
+  buildScrapeReport,
 } from '../utils/build-embed.js';
 import respondWithObserveNames from '../utils/observe-name-autocomplete.js';
 import Command from './command.js';
@@ -19,11 +22,11 @@ import Command from './command.js';
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('scrape')
-    .setDescription('Manually trigger a scrape for one of your Observes')
+    .setDescription('Check one of your Observes right now')
     .addStringOption((option) =>
       option
         .setName('name')
-        .setDescription('Name of your observe to scrape')
+        .setDescription('Name of your Observe to check')
         .setAutocomplete(true)
         .setRequired(true)
     );
@@ -37,79 +40,91 @@ export default class implements Command {
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
     const name = interaction.options.getString('name')!;
+    const observe = await this.observeManager.findByName(
+      interaction.guildId!,
+      interaction.user.id,
+      name
+    );
 
-    const observes = await this.observeManager.getObserves({
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    });
-
-    const observe = observes.find((userObserve) => userObserve.name == name);
-
-    if (observe) {
-      await interaction.deferReply({ ephemeral: true });
-
-      // Goes through the same manager method the background scheduler uses,
-      // so a manual scrape persists lastScrapeAtMS/amountScraped, tracks
-      // consecutive timeouts, and auto-deactivates on a found change just
-      // like a scheduled one would - it just skips the DM (notify: false)
-      // since the user is already looking at the result right here.
-      const { scrapeResult, observe: updatedObserve } =
-        await this.observeManager.processObserve(observe, { notify: false });
-
-      let content: string;
-      let options: EmbedOptions = { color: 'DarkGreen' };
-      switch (scrapeResult.type) {
-        case ScrapeResultType.Change: {
-          content =
-            'A change has been found for your following observe - check quickly!';
-          break;
-        }
-
-        case ScrapeResultType.NoChange: {
-          content =
-            'No change - we still found the text you provided. If this Observe is still active, we will continue to observe in the background for you!';
-          break;
-        }
-
-        case ScrapeResultType.ElementNotFound:
-        case ScrapeResultType.TextNotFound: {
-          content = scrapeResult.message;
-          options = { color: 'Orange' };
-          break;
-        }
-
-        case ScrapeResultType.Timeout: {
-          content =
-            'While scraping your Observe, we ran into a timeout. Check if the page itself still works and adjust if necessary!';
-          options = { color: 'Orange' };
-          break;
-        }
-
-        default: {
-          content = `Scraping returned \`${
-            ScrapeResultType[scrapeResult.type]
-          }\` which is not handled by the bot. Check Observe and adjust if necessary!`;
-          options = { color: 'Orange' };
-          break;
-        }
-      }
-
-      await interaction.followUp({
-        content: content!,
-        embeds: [buildObserveEmbed(updatedObserve, options)],
-        ephemeral: true,
-      });
-    } else {
+    if (!observe) {
       await interaction.reply({
         embeds: [
           buildCommandResultEmbed({
             successful: false,
-            message: `Couldn't find an Observe of yours with the name ${name}. Make use of the autocorrect feature of this command or double check with \`/list\`!`,
+            message: `You don't have an Observe called \`${name}\` - check \`/list\`.`,
           }),
         ],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
+      return;
     }
+
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+    // Same pipeline as the background checks (history, failure counting,
+    // confirmation, (de)activation) - minus the DM, since the result is
+    // shown right here.
+    const { outcome, scrapeResult, observe: updated } =
+      await this.observeManager.processObserve(observe, { notify: false });
+
+    if (outcome === 'busy' || !scrapeResult) {
+      await interaction.editReply({
+        embeds: [
+          buildCommandResultEmbed({
+            successful: false,
+            message: `\`${observe.name}\` is being checked right now - try again in a moment.`,
+          }),
+        ],
+      });
+      return;
+    }
+
+    const verdicts: Record<
+      Exclude<CheckOutcome, 'busy'>,
+      { title: string; text: string; color: ColorResolvable }
+    > = {
+      triggered: {
+        title: '🔔 Change found',
+        text: updated.active
+          ? 'Confirmed by a second load. This Observe stays active (keep-active).'
+          : 'Confirmed by a second load. This Observe is now inactive - **Keep watching** re-arms it for the next change.',
+        color: 'Gold',
+      },
+      unchanged: {
+        title: 'No change',
+        text: updated.active
+          ? 'Nothing to report - checking continues in the background.'
+          : 'Nothing to report. This Observe is inactive, so it is not checked in the background.',
+        color: 'DarkGreen',
+      },
+      unconfirmed: {
+        title: 'Change not confirmed',
+        text: 'The first load looked like a change, but a second load a moment later did not - most likely a glitch. Nothing changed.',
+        color: 'Orange',
+      },
+      undelivered: {
+        title: '🔔 Change found',
+        text: 'Change confirmed.',
+        color: 'Gold',
+      },
+      failed: {
+        title: 'Check failed',
+        text: scrapeResult.ok
+          ? ''
+          : `${failureText(scrapeResult.failure, {
+              cssSelector: observe.cssSelector,
+              httpStatus: scrapeResult.httpStatus,
+            })}. This counts as a failed check (${updated.consecutiveTimeouts} in a row).`,
+        color: 'Orange',
+      },
+    };
+
+    const report = buildScrapeReport(observe, scrapeResult, verdicts[outcome]);
+    await interaction.editReply({
+      embeds: [...report.embeds, buildObserveEmbed(updated)],
+      files: report.files,
+      components: [actionRow(updated)],
+    });
   }
 
   public async handleAutocompleteInteraction(

@@ -100,8 +100,26 @@
         "smart"
       ],
       "no-eq-null": "off",
-      "capitalized-comments": "off"
-    }
+      "capitalized-comments": "off",
+      "@typescript-eslint/ban-types": "off",
+      "@typescript-eslint/no-floating-promises": [
+        "error",
+        {
+          "ignoreVoid": true,
+          "ignoreIIFE": true
+        }
+      ]
+    },
+    "overrides": [
+      {
+        "files": [
+          "src/**/*.test.ts"
+        ],
+        "rules": {
+          "@typescript-eslint/no-floating-promises": "off"
+        }
+      }
+    ]
   },
   "dependencies": {
     "@discordjs/builders": "1.14.1",

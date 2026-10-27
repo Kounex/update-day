@@ -4,8 +4,6 @@ import { prisma } from '../utils/db.js';
 
 @injectable()
 export default class SettingsService {
-  constructor() {}
-
   public async getSettings(guildId: string): Promise<Settings> {
     const settings = await prisma.settings.findUnique({ where: { guildId } });
     if (!settings) {
@@ -24,18 +22,16 @@ export default class SettingsService {
       timeout?: number;
       notifyOnFirstTimeout?: boolean;
       timeoutsTillNotify?: number;
+      // `null` clears it (back to the channel each Observe was created in)
+      notifyChannelId?: string | null;
     }
   ): Promise<void> {
+    await this.createSettings(guildId);
     await prisma.settings.update({
       where: { guildId },
       data: {
         updatedAtMS: BigInt(Date.now()),
-        userObserveLimit: settings.userObserveLimit,
-        guildObserveLimit: settings.guildObserveLimit,
-        consecutiveTimeoutsLimit: settings.consecutiveTimeoutsLimit,
-        timeout: settings.timeout,
-        notifyOnFirstTimeout: settings.notifyOnFirstTimeout,
-        timeoutsTillNotify: settings.timeoutsTillNotify,
+        ...settings,
       },
     });
   }

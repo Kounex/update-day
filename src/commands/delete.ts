@@ -6,12 +6,18 @@ import {
   ButtonInteraction,
   ButtonStyle,
   ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
-import { buildCommandResultEmbed } from '../utils/build-embed.js';
+import { Observe } from '../types/models/observe.js';
+import {
+  BUTTON_DELETE,
+  buildCommandResultEmbed,
+} from '../utils/build-embed.js';
 import respondWithObserveNames from '../utils/observe-name-autocomplete.js';
+import { ownedObserveFromButton } from '../utils/owned-observe.js';
 import Command from './command.js';
 
 const CONFIRM_PREFIX = 'delete-confirm:';
@@ -30,7 +36,13 @@ export default class implements Command {
         .setRequired(true)
     );
 
-  public readonly handledButtonIds = [CONFIRM_PREFIX, CANCEL_PREFIX] as const;
+  // BUTTON_DELETE is the "Delete…" button on notifications and listings - it
+  // leads to the same confirmation as the command.
+  public readonly handledButtonIds = [
+    CONFIRM_PREFIX,
+    CANCEL_PREFIX,
+    BUTTON_DELETE,
+  ] as const;
 
   constructor(
     @inject(TYPES.Managers.Observe)
@@ -41,81 +53,58 @@ export default class implements Command {
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
     const name = interaction.options.getString('name')!;
-
-    const observes = await this.observeManager.getObserves({
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    });
-
-    if (!observes.some((observe) => observe.name == name)) {
-      await interaction.reply({
-        embeds: [
-          buildCommandResultEmbed({
-            successful: false,
-            message: `Did not find an Observe to delete with the name \`${name}\`. Make sure it exists with \`/list\`.`,
-          }),
-        ],
-        ephemeral: true,
-      });
-      return;
-    }
-
-    // Deleting is unrecoverable, so make sure it's intentional before it
-    // happens instead of a single command invocation nuking it outright.
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`${CONFIRM_PREFIX}${interaction.user.id}:${name}`)
-        .setLabel('Delete')
-        .setStyle(ButtonStyle.Danger),
-      new ButtonBuilder()
-        .setCustomId(`${CANCEL_PREFIX}${interaction.user.id}:${name}`)
-        .setLabel('Cancel')
-        .setStyle(ButtonStyle.Secondary)
-    );
-
-    await interaction.reply({
-      content: `Are you sure you want to delete your Observe \`${name}\`? This can't be undone.`,
-      components: [row],
-      ephemeral: true,
-    });
-  }
-
-  public async handleButtonInteraction(
-    interaction: ButtonInteraction
-  ): Promise<void> {
-    const isCancel = interaction.customId.startsWith(CANCEL_PREFIX);
-    const rest = interaction.customId.slice(
-      isCancel ? CANCEL_PREFIX.length : CONFIRM_PREFIX.length
-    );
-    const separatorIndex = rest.indexOf(':');
-    const userId = rest.slice(0, separatorIndex);
-    const name = rest.slice(separatorIndex + 1);
-
-    // Ephemeral messages are only ever visible to the user who triggered
-    // them, so in practice only they could ever click this - kept as a
-    // cheap, explicit safety net rather than a load-bearing check.
-    if (interaction.user.id !== userId) {
-      await interaction.reply({
-        content: 'This isn\'t your confirmation to respond to!',
-        ephemeral: true,
-      });
-      return;
-    }
-
-    if (isCancel) {
-      await interaction.update({
-        content: `Cancelled - your Observe \`${name}\` was not deleted.`,
-        components: [],
-      });
-      return;
-    }
-
-    const commandResult = await this.observeManager.deleteObserve(
+    const observe = await this.observeManager.findByName(
       interaction.guildId!,
       interaction.user.id,
       name
     );
 
+    if (!observe) {
+      await interaction.reply({
+        embeds: [
+          buildCommandResultEmbed({
+            successful: false,
+            message: `You don't have an Observe called \`${name}\` - check \`/list\`.`,
+          }),
+        ],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    await interaction.reply(this.confirmation(observe));
+  }
+
+  public async handleButtonInteraction(
+    interaction: ButtonInteraction
+  ): Promise<void> {
+    const prefix = [CONFIRM_PREFIX, CANCEL_PREFIX, BUTTON_DELETE].find(
+      (candidate) => interaction.customId.startsWith(candidate)
+    )!;
+    const observe = await ownedObserveFromButton(
+      interaction,
+      prefix,
+      this.observeManager
+    );
+    if (!observe) {
+      return;
+    }
+
+    if (prefix === BUTTON_DELETE) {
+      // Deleting is unrecoverable, so even the button asks first.
+      await interaction.reply(this.confirmation(observe));
+      return;
+    }
+
+    if (prefix === CANCEL_PREFIX) {
+      await interaction.update({
+        content: `Cancelled - your Observe \`${observe.name}\` was not deleted.`,
+        components: [],
+      });
+      return;
+    }
+
+    const commandResult = await this.observeManager.deleteObserve(observe);
     await interaction.update({
       content: '',
       embeds: [buildCommandResultEmbed(commandResult)],
@@ -127,5 +116,24 @@ export default class implements Command {
     interaction: AutocompleteInteraction
   ): Promise<void> {
     await respondWithObserveNames(interaction, this.observeManager);
+  }
+
+  private confirmation(observe: Observe) {
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`${CONFIRM_PREFIX}${observe.id}`)
+        .setLabel('Delete')
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId(`${CANCEL_PREFIX}${observe.id}`)
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Secondary)
+    );
+
+    return {
+      content: `Are you sure you want to delete your Observe \`${observe.name}\`? This can't be undone.`,
+      components: [row],
+      flags: MessageFlags.Ephemeral as const,
+    };
   }
 }

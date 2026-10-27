@@ -2,16 +2,30 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
+  MessageFlags,
 } from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
-import { ScrapeInterval } from '../types/models/observe.js';
 import {
   buildCommandResultEmbed,
   buildObserveEmbed,
+  buildScrapeReport,
 } from '../utils/build-embed.js';
+import respondWithObserveNames, {
+  toChoices,
+} from '../utils/observe-name-autocomplete.js';
 import Command from './command.js';
+import {
+  intervalOption,
+  keepActiveOption,
+  modeOption,
+  nameOption,
+  notifyOption,
+  selectorOption,
+  textOption,
+  urlOption,
+} from './options.js';
 
 @injectable()
 export default class implements Command {
@@ -26,38 +40,35 @@ export default class implements Command {
         .setRequired(true)
     )
     .addStringOption((option) =>
-      option
+      nameOption(option)
         .setName('name')
         .setDescription('New name - leave empty to keep the current one')
         .setAutocomplete(true)
     )
     .addStringOption((option) =>
-      option
+      urlOption(option)
         .setName('url')
         .setDescription('New URL - leave empty to keep the current one')
         .setAutocomplete(true)
     )
     .addStringOption((option) =>
-      option
+      textOption(option)
         .setName('text')
-        .setDescription(
-          'New text to watch for - leave empty to keep the current one'
-        )
+        .setDescription('New text to watch - leave empty to keep the current one')
         .setAutocomplete(true)
     )
     .addStringOption((option) =>
-      option
-        .setName('scrape-interval')
-        .setDescription('New scrape interval - leave empty to keep the current one')
-        .setChoices(
-          ScrapeInterval.enumValues.map((type) => ({
-              name: ScrapeInterval.enumText(type),
-              value: type,
-            }))
-        )
+      modeOption(option).setDescription(
+        'New mode - leave empty to keep the current one'
+      )
     )
     .addStringOption((option) =>
-      option
+      intervalOption(option).setDescription(
+        'New scrape interval - leave empty to keep the current one'
+      )
+    )
+    .addStringOption((option) =>
+      selectorOption(option)
         .setName('css-selector')
         .setDescription(
           'Narrows the search area; type "none" to remove it and go back to whole page'
@@ -65,11 +76,14 @@ export default class implements Command {
         .setAutocomplete(true)
     )
     .addBooleanOption((option) =>
-      option
-        .setName('keep-active')
-        .setDescription(
-          'Keep watching after a change is found - leave empty to keep as-is'
-        )
+      keepActiveOption(option).setDescription(
+        'Keep watching after a change is found - leave empty to keep as-is'
+      )
+    )
+    .addStringOption((option) =>
+      notifyOption(option).setDescription(
+        'Where to notify you - leave empty to keep as-is'
+      )
     );
 
   constructor(
@@ -89,13 +103,16 @@ export default class implements Command {
     // "none" to mean "provided, clear it" (go back to whole-page search).
     const rawCssSelector = interaction.options.getString('css-selector');
     const cssSelectorEdit =
-      rawCssSelector == null
+      rawCssSelector === null
         ? undefined
         : rawCssSelector.trim().toLocaleLowerCase() === 'none'
           ? null
           : rawCssSelector;
 
-    const commandResult = await this.observeManager.editObserve(
+    // Changing what's watched re-checks the page, which takes a moment.
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+    const result = await this.observeManager.editObserve(
       interaction.guildId!,
       interaction.user.id,
       currentName,
@@ -104,21 +121,43 @@ export default class implements Command {
         url: interaction.options.getString('url') ?? undefined,
         cssSelector: cssSelectorEdit,
         watchText: interaction.options.getString('text') ?? undefined,
+        watchMode: interaction.options.getString('mode') ?? undefined,
+        notifyMode: interaction.options.getString('notify') ?? undefined,
         scrapeInterval:
           interaction.options.getString('scrape-interval') ?? undefined,
         keepActive: interaction.options.getBoolean('keep-active') ?? undefined,
       }
     );
 
-    if (commandResult.successful) {
-      await interaction.reply({
-        embeds: [buildObserveEmbed(commandResult.observe!)],
-        ephemeral: true,
+    if (!result.successful) {
+      await interaction.editReply(
+        result.scrapeResult && result.observe
+          ? buildScrapeReport(result.observe, result.scrapeResult, {
+              title: 'Not saved',
+              text: result.message ?? 'Something is off with this change.',
+              color: 'DarkRed',
+            })
+          : { embeds: [buildCommandResultEmbed(result)] }
+      );
+      return;
+    }
+
+    const observe = result.observe!;
+    if (result.scrapeResult) {
+      const report = buildScrapeReport(observe, result.scrapeResult, {
+        title: 'What the bot sees now',
+        text: 'The new target was checked once - this is the new starting point.',
+        color: 'DarkBlue',
+      });
+      await interaction.editReply({
+        content: `✅ \`${observe.name}\` updated.`,
+        embeds: [buildObserveEmbed(observe), ...report.embeds],
+        files: report.files,
       });
     } else {
-      await interaction.reply({
-        embeds: [buildCommandResultEmbed(commandResult)],
-        ephemeral: true,
+      await interaction.editReply({
+        content: `✅ \`${observe.name}\` updated.`,
+        embeds: [buildObserveEmbed(observe)],
       });
     }
   }
@@ -126,60 +165,29 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    let options: string[] = [];
-    const observes = await this.observeManager.getObserves({
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    });
-    const currentName = interaction.options.getString('current-name');
     const focusedOption = interaction.options.getFocused(true);
-
-    let observe;
-    if (currentName != null) {
-      observe = observes.find((observe) => observe.name == currentName);
+    if (focusedOption.name === 'current-name') {
+      await respondWithObserveNames(interaction, this.observeManager);
+      return;
     }
 
-    switch (focusedOption.name) {
-      case 'current-name': {
-        options = observes.map((observe) => observe.name);
-        break;
-      }
+    // For the other fields, offer the current value to start editing from.
+    const currentName = interaction.options.getString('current-name');
+    const observe = currentName
+      ? await this.observeManager.findByName(
+          interaction.guildId!,
+          interaction.user.id,
+          currentName
+        )
+      : undefined;
 
-      case 'name': {
-        if (observe) {
-          options = [observe.name];
-        }
+    const current = {
+      name: observe?.name,
+      url: observe?.url,
+      text: observe?.watchText,
+      'css-selector': observe?.cssSelector,
+    }[focusedOption.name];
 
-        break;
-      }
-
-      case 'url': {
-        if (observe) {
-          options = [observe.url];
-        }
-
-        break;
-      }
-
-      case 'css-selector': {
-        if (Boolean(observe) && observe.cssSelector != null) {
-          options = [observe.cssSelector];
-        }
-
-        break;
-      }
-
-      case 'text': {
-        if (observe) {
-          options = [observe.watchText];
-        }
-
-        break;
-      }
-    }
-
-    await interaction.respond(
-      options.map((option) => ({ name: option, value: option }))
-    );
+    await interaction.respond(toChoices(current ? [current] : []));
   }
 }

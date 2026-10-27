@@ -8,24 +8,56 @@ datasource db {
 }
 
 model Observe {
-  guildId               String  
-  userId                String  
+  id                    Int       @id @default(autoincrement())
+  guildId               String
+  userId                String
+  // Channel `/observe` was run in - where channel notifications (and the
+  // fallback for a failed DM) go, unless the guild set a notify channel.
+  channelId             String?
   createdAtMS           BigInt
   updatedAtMS           BigInt    @default(0)
   name                  String
   url                   String
   cssSelector           String?
-  watchText             String
+  // Empty for the `Changes` mode, which watches the selector's whole text.
+  watchText             String    @default("")
+  watchMode             String    @default("Disappears")
+  notifyMode            String    @default("DM")
   scrapeIntervalType    String    @default("Hourly")
   keepActive            Boolean   @default(false)
   active                Boolean   @default(true)
   lastScrapeAtMS        BigInt    @default(0)
+  nextScrapeAtMS        BigInt    @default(0)
+  // Last state the user has been told about (or the baseline): `present` /
+  // `absent` for the text modes, a hash of the text for `Changes`. Only moves
+  // to a triggering state once the notification was actually delivered, so a
+  // failed delivery is retried on the next check.
+  lastState             String?
+  lastText              String?
+  lastResult            String?
+  lastError             String?
+  triggeredAtMS         BigInt    @default(0)
+  // Count failed checks of any kind (timeouts, HTTP errors, bot walls, ...)
   consecutiveTimeouts   Int       @default(0)
   timeouts              Int       @default(0)
   thumbnail             String?
   amountScraped         Int       @default(0)
+  scrapeLogs            ScrapeLog[]
 
   @@unique([guildId, userId, name])
+}
+
+model ScrapeLog {
+  id          Int      @id @default(autoincrement())
+  observeId   Int
+  observe     Observe  @relation(fields: [observeId], references: [id], onDelete: Cascade)
+  atMS        BigInt
+  outcome     String
+  httpStatus  Int?
+  durationMS  Int
+  detail      String?
+
+  @@index([observeId, atMS])
 }
 
 model Settings {
@@ -38,4 +70,5 @@ model Settings {
   timeout                        Int      @default(15)
   notifyOnFirstTimeout           Boolean  @default(false)
   timeoutsTillNotify             Int      @default(10)
+  notifyChannelId                String?
 }

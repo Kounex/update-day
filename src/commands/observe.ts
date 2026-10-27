@@ -1,68 +1,79 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { ChatInputCommandInteraction } from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  MessageFlags,
+  PermissionFlagsBits,
+} from 'discord.js';
 import { inject, injectable } from 'inversify';
 import ObserveManager from '../managers/observe.js';
 import { TYPES } from '../types.js';
-import { Observe, ScrapeInterval } from '../types/models/observe.js';
+import { NotifyMode, Observe } from '../types/models/observe.js';
 import {
+  actionRow,
   buildCommandResultEmbed,
   buildObserveEmbed,
+  buildScrapeReport,
 } from '../utils/build-embed.js';
 import Command from './command.js';
+import {
+  intervalOption,
+  keepActiveOption,
+  modeOption,
+  nameOption,
+  notifyOption,
+  selectorOption,
+  textOption,
+  urlOption,
+} from './options.js';
 
 @injectable()
 export default class implements Command {
   public readonly slashCommand = new SlashCommandBuilder()
     .setName('observe')
-    .setDescription('Observe a website')
+    .setDescription('Watch a web page and get notified when it changes')
     .addStringOption((option) =>
-      option
+      nameOption(option)
         .setName('name')
         .setDescription('Name so you can recognize and manage it later')
         .setRequired(true)
     )
     .addStringOption((option) =>
-      option
+      urlOption(option)
         .setName('url')
-        .setDescription(
-          'Website URL to Observe | e.g. https://www.lttstore.com/products/screwdriver-t-shirt'
-        )
+        .setDescription('Page to watch, e.g. https://shop.example.com/products/thing')
         .setRequired(true)
     )
     .addStringOption((option) =>
-      option
+      textOption(option)
         .setName('text')
         .setDescription(
-          'Text currently on the page (e.g. "coming soon") - you will be notified once it is no longer found'
-        )
-        .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName('scrape-interval')
-        .setDescription(
-          'How often to check | Hourly is the default'
-        )
-        .setChoices(
-          ScrapeInterval.enumValues.map((type) => ({
-              name: ScrapeInterval.enumText(type),
-              value: type,
-            }))
+          'Text to watch, e.g. "sold out" - needed unless the mode is "Content changes"'
         )
     )
     .addStringOption((option) =>
-      option
+      modeOption(option).setDescription(
+        'What counts as a change - "Text disappears" by default'
+      )
+    )
+    .addStringOption((option) =>
+      intervalOption(option).setDescription('How often to check - Hourly by default')
+    )
+    .addStringOption((option) =>
+      selectorOption(option)
         .setName('css-selector')
         .setDescription(
-          'Narrows the search area, useful if the text could also appear elsewhere on the page'
+          'Only look inside this part of the page, e.g. if the text also appears elsewhere'
         )
     )
     .addBooleanOption((option) =>
-      option
-        .setName('keep-active')
-        .setDescription(
-          'Keep watching after a change is found, instead of auto-deactivating - false by default'
-        )
+      keepActiveOption(option).setDescription(
+        'Keep watching after a change was found, instead of going inactive - false by default'
+      )
+    )
+    .addStringOption((option) =>
+      notifyOption(option).setDescription(
+        'Where to notify you - a direct message by default'
+      )
     );
 
   constructor(
@@ -73,50 +84,81 @@ export default class implements Command {
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
-    const observe = Observe.create(
-      interaction.guildId!,
-      interaction.user.id,
-      Date.now(),
-      0,
-      interaction.options.getString('name')!,
-      interaction.options.getString('url')!,
-      interaction.options.getString('css-selector'),
-      interaction.options.getString('text')!,
-      interaction.options.getString('scrape-interval'),
-      interaction.options.getBoolean('keep-active') ?? false
-    );
+    const observe = Observe.create({
+      guildId: interaction.guildId!,
+      userId: interaction.user.id,
+      channelId: interaction.channelId,
+      name: interaction.options.getString('name')!,
+      url: interaction.options.getString('url')!,
+      watchText: interaction.options.getString('text'),
+      watchMode: interaction.options.getString('mode'),
+      scrapeInterval: interaction.options.getString('scrape-interval'),
+      cssSelector: interaction.options.getString('css-selector'),
+      keepActive: interaction.options.getBoolean('keep-active'),
+      notifyMode: interaction.options.getString('notify'),
+    });
 
-    if (observe instanceof Observe) {
-      await interaction.deferReply({ ephemeral: true });
+    if (!(observe instanceof Observe)) {
+      await interaction.reply({
+        embeds: [
+          buildCommandResultEmbed({ successful: false, message: observe.message }),
+        ],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
 
-      const result = await this.observeManager.addObserve(observe);
-
-      if (result.successful) {
-        await interaction.followUp({
-          embeds: [buildObserveEmbed(observe)],
-          ephemeral: true,
-        });
-      } else {
-        await interaction.followUp({
-          embeds: [
-            buildCommandResultEmbed({
-              successful: false,
-              message: result.message,
-            }),
-          ],
-          ephemeral: true,
-        });
-      }
-    } else {
+    if (
+      observe.notifyMode !== NotifyMode.DM &&
+      !interaction.appPermissions.has([
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+      ])
+    ) {
       await interaction.reply({
         embeds: [
           buildCommandResultEmbed({
             successful: false,
-            message: observe.message,
+            message:
+              'I can\'t post in this channel, so I couldn\'t notify you here. Run this in a channel I can write in, or use `notify: Direct message`.',
           }),
         ],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
+      return;
     }
+
+    // Checking the page can take a while (it's loaded for real).
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    const result = await this.observeManager.addObserve(observe);
+
+    if (!result.scrapeResult) {
+      await interaction.editReply({
+        embeds: [buildCommandResultEmbed(result)],
+      });
+      return;
+    }
+
+    if (!result.successful) {
+      const report = buildScrapeReport(observe, result.scrapeResult, {
+        title: 'Not saved',
+        text: result.message ?? 'Something is off with this Observe.',
+        color: 'DarkRed',
+      });
+      await interaction.editReply(report);
+      return;
+    }
+
+    const report = buildScrapeReport(observe, result.scrapeResult, {
+      title: 'What the bot sees right now',
+      text: 'The page was checked once - this is the starting point.',
+      color: 'DarkBlue',
+    });
+    await interaction.editReply({
+      content: `✅ Now watching \`${observe.name}\`.`,
+      embeds: [buildObserveEmbed(result.observe!), ...report.embeds],
+      files: report.files,
+      components: [actionRow(result.observe!)],
+    });
   }
 }
