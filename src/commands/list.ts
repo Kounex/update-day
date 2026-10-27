@@ -67,7 +67,7 @@ export default class implements Command {
     } else {
       const observe = observes.find((observe) => observe.name == name);
 
-      if (!!observe) {
+      if (observe) {
         await interaction.reply({
           embeds: [buildObserveEmbed(observe, { color: 'DarkBlue' })],
           ephemeral: true,

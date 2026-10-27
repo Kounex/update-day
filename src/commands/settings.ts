@@ -156,7 +156,7 @@ export default class implements Command {
         const timeout = interaction.options.getInteger('timeout')!;
 
         await this.settingsService.updateSettings(interaction.guildId!, {
-          timeout: timeout,
+          timeout,
         });
 
         await interaction.reply({
@@ -224,8 +224,8 @@ export default class implements Command {
             buildCommandResultEmbed({
               successful: true,
               message: notify
-                ? `The bot will now notify users about a first timeout of their Observes!`
-                : `The bot won't notify users about timeouts of their Observe, only once they hit the consecutive limit and their Observe will be deactivated!`,
+                ? 'The bot will now notify users about a first timeout of their Observes!'
+                : 'The bot won\'t notify users about timeouts of their Observe, only once they hit the consecutive limit and their Observe will be deactivated!',
             }),
           ],
           ephemeral: true,

@@ -52,7 +52,7 @@ export default class {
     }
 
     // Register event handlers
-    // eslint-disable-next-line complexity
+
     this.client.on('interactionCreate', async (interaction) => {
       try {
         if (interaction.isCommand()) {
@@ -63,7 +63,7 @@ export default class {
           }
 
           if (!interaction.guild) {
-            await interaction.reply(errorMsg("you can't use this bot in a DM"));
+            await interaction.reply(errorMsg('you can\'t use this bot in a DM'));
             return;
           }
 
@@ -173,7 +173,9 @@ export default class {
 
     // Handle events
     this.client.on('guildCreate', (guild) => {
-      handleGuildCreate(guild).catch((error: unknown) => debug(error));
+      handleGuildCreate(guild).catch((error: unknown) => {
+ debug(error);
+});
     });
 
     await this.client.login();

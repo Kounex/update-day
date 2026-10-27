@@ -45,7 +45,7 @@ export default class implements Command {
 
     const observe = observes.find((userObserve) => userObserve.name == name);
 
-    if (!!observe) {
+    if (observe) {
       await interaction.deferReply({ ephemeral: true });
 
       // Goes through the same manager method the background scheduler uses,
@@ -56,31 +56,35 @@ export default class implements Command {
       const { scrapeResult, observe: updatedObserve } =
         await this.observeManager.processObserve(observe, { notify: false });
 
-      var content: string;
-      var options: EmbedOptions = { color: 'DarkGreen' };
+      let content: string;
+      let options: EmbedOptions = { color: 'DarkGreen' };
       switch (scrapeResult.type) {
         case ScrapeResultType.Change: {
           content =
             'A change has been found for your following observe - check quickly!';
           break;
         }
+
         case ScrapeResultType.NoChange: {
           content =
             'No change - we still found the text you provided. If this Observe is still active, we will continue to observe in the background for you!';
           break;
         }
+
         case ScrapeResultType.ElementNotFound:
         case ScrapeResultType.TextNotFound: {
           content = scrapeResult.message;
           options = { color: 'Orange' };
           break;
         }
+
         case ScrapeResultType.Timeout: {
           content =
             'While scraping your Observe, we ran into a timeout. Check if the page itself still works and adjust if necessary!';
           options = { color: 'Orange' };
           break;
         }
+
         default: {
           content = `Scraping returned \`${
             ScrapeResultType[scrapeResult.type]
@@ -92,7 +96,7 @@ export default class implements Command {
 
       await interaction.followUp({
         content: content!,
-        embeds: [buildObserveEmbed(updatedObserve, options!)],
+        embeds: [buildObserveEmbed(updatedObserve, options)],
         ephemeral: true,
       });
     } else {

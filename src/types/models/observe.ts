@@ -19,9 +19,7 @@ export class ScrapeInterval {
   }
 
   public static get enumValues(): string[] {
-    return Object.keys(ScrapeIntervalType).filter((item) => {
-      return isNaN(Number(item));
-    });
+    return Object.keys(ScrapeIntervalType).filter((item) => isNaN(Number(item)));
   }
 
   public static enumText(type: ScrapeIntervalType | string): string {
@@ -31,15 +29,19 @@ export class ScrapeInterval {
       case ScrapeIntervalType.OneMinute: {
         return 'Every Minute';
       }
+
       case ScrapeIntervalType.FiveMinutes: {
         return 'Every 5 Minutes';
       }
+
       case ScrapeIntervalType.FifteenMinutes: {
         return 'Every 15 Minutes';
       }
+
       case ScrapeIntervalType.Hourly: {
         return 'Hourly';
       }
+
       case ScrapeIntervalType.Daily: {
         return 'Daily';
       }
@@ -51,15 +53,19 @@ export class ScrapeInterval {
       case ScrapeIntervalType.OneMinute: {
         return 60 * 1000;
       }
+
       case ScrapeIntervalType.FiveMinutes: {
         return 5 * 60 * 1000;
       }
+
       case ScrapeIntervalType.FifteenMinutes: {
         return 15 * 60 * 1000;
       }
+
       case ScrapeIntervalType.Hourly: {
         return 60 * 60 * 1000;
       }
+
       case ScrapeIntervalType.Daily: {
         return 24 * 60 * 60 * 1000;
       }
@@ -75,18 +81,18 @@ export class Observe {
     public readonly updatedAtMS: bigint,
     public readonly name: string,
     public readonly url: string,
-    public readonly cssSelector: string | null,
+    public readonly cssSelector: string | undefined,
     public readonly watchText: string,
     public readonly scrapeInterval: ScrapeInterval = new ScrapeInterval(
       ScrapeIntervalType.Hourly
     ),
-    public readonly keepActive: boolean = false,
-    public readonly active: boolean = true,
-    public readonly lastScrapeAtMS: bigint = BigInt(0),
-    public readonly consecutiveTimeouts: number = 0,
-    public readonly timeouts: number = 0,
-    public thumbnail: string | null,
-    public amountScraped: number = 0
+    public readonly keepActive = false,
+    public readonly active = true,
+    public readonly lastScrapeAtMS = BigInt(0),
+    public readonly consecutiveTimeouts = 0,
+    public readonly timeouts = 0,
+    public thumbnail: string | undefined,
+    public amountScraped = 0
   ) {}
 
   public static create(
@@ -96,16 +102,16 @@ export class Observe {
     updatedAtMS: number | bigint,
     name: string,
     url: string,
-    cssSelector: string | null | undefined,
+    cssSelector: string | undefined,
     watchText: string,
-    scrapeInterval: string | ScrapeInterval | null,
-    keepActive: boolean = false,
-    active: boolean = true,
+    scrapeInterval: string | ScrapeInterval | undefined,
+    keepActive = false,
+    active = true,
     lastScrapeAtMS: number | bigint = BigInt(0),
-    consecutiveTimeouts: number = 0,
-    timeouts: number = 0,
-    thumbnail?: string | null,
-    amountScraped: number = 0
+    consecutiveTimeouts = 0,
+    timeouts = 0,
+    thumbnail?: string | undefined,
+    amountScraped = 0
   ): Observe | Error {
     if (!this.isValidURL(url.trim())) {
       return {
@@ -114,13 +120,15 @@ export class Observe {
           'Not a valid URL - has comply with the `URL` spec in general and contain `http` / `https`!',
       };
     }
+
     const trimmedSelector = cssSelector?.trim();
-    if (!!trimmedSelector && !this.isValidCSSSelector(trimmedSelector)) {
+    if (Boolean(trimmedSelector) && !this.isValidCSSSelector(trimmedSelector)) {
       return {
         name: 'NotValidAttribute',
         message: 'Not a valid CSS-Selector!',
       };
     }
+
     if (watchText.trim().length < 1) {
       return {
         name: 'NotValidAttribute',

@@ -96,7 +96,7 @@ export default class implements Command {
     // cheap, explicit safety net rather than a load-bearing check.
     if (interaction.user.id !== userId) {
       await interaction.reply({
-        content: "This isn't your confirmation to respond to!",
+        content: 'This isn\'t your confirmation to respond to!',
         ephemeral: true,
       });
       return;

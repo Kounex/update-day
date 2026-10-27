@@ -52,9 +52,10 @@ export default class {
       observe.userId
     );
 
-    if (!!checkResult.commandResult) {
+    if (checkResult.commandResult) {
       return checkResult.commandResult;
     }
+
     const observes = checkResult.observes!;
 
     if (observes.some((userObserve) => userObserve.name == observe.name)) {
@@ -149,6 +150,7 @@ export default class {
       if (notify) {
         await this.handleTimeoutScenarios(observe, settings);
       }
+
       return;
     }
 
@@ -226,7 +228,7 @@ export default class {
       // whole-page search), since it's the one field that can be unset.
       name?: string;
       url?: string;
-      cssSelector?: string | null;
+      cssSelector?: string | undefined;
       watchText?: string;
       scrapeInterval?: string;
       keepActive?: boolean;
@@ -285,9 +287,9 @@ export default class {
         where: {
           guildId: newObserve.guildId,
           userId: newObserve.userId,
-          name: name,
+          name,
         },
-        data: newObserve.toPrisma()['data'],
+        data: newObserve.toPrisma().data,
       });
 
       if (count < 1) {
@@ -302,12 +304,12 @@ export default class {
         successful: true,
         observe: newObserve,
       };
-    } else {
+    }
+
       return {
         successful: false,
         message: newObserve.message,
       };
-    }
   }
 
   public async deleteObserve(
@@ -317,9 +319,9 @@ export default class {
   ): Promise<CommandResult> {
     const { count } = await prisma.observe.deleteMany({
       where: {
-        guildId: guildId,
-        userId: userId,
-        name: name,
+        guildId,
+        userId,
+        name,
       },
     });
 
@@ -343,9 +345,9 @@ export default class {
   ): Promise<CommandResult> {
     const { count } = await prisma.observe.updateMany({
       where: {
-        guildId: guildId,
-        userId: userId,
-        name: name,
+        guildId,
+        userId,
+        name,
       },
       data: {
         active: true,
@@ -376,13 +378,13 @@ export default class {
     userId: string
   ): Promise<CheckResult> {
     const settings = await this.settingsService.getSettings(guildId);
-    const observes = await this.getObserves({ guildId: guildId });
+    const observes = await this.getObserves({ guildId });
 
     if (observes.length >= settings.guildObserveLimit) {
       return {
         commandResult: {
           successful: false,
-          message: `The bot has reached its limit for Observes per guild!`,
+          message: 'The bot has reached its limit for Observes per guild!',
         },
       };
     }
@@ -393,11 +395,11 @@ export default class {
       return {
         commandResult: {
           successful: false,
-          message: `You have reached the limit of Observes per user!`,
+          message: 'You have reached the limit of Observes per user!',
         },
       };
     }
 
-    return { observes: observes };
+    return { observes };
   }
 }

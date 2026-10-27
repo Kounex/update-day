@@ -136,7 +136,7 @@ export const buildObserveOverview = async (
   const message = new EmbedBuilder();
   const uniqueUserIds = [...new Set(observes.map((observe) => observe.userId))];
   const users = await Promise.all(
-    uniqueUserIds.map((userId) => client.users.fetch(userId))
+    uniqueUserIds.map(async (userId) => client.users.fetch(userId))
   );
   const userIdNameMap = new Map(
     uniqueUserIds.map((userId, index) => [userId, users[index].displayName])
@@ -211,6 +211,7 @@ function buildColumnFields(observes: Observe[], columns: Column[]) {
         safeRowCount = Math.min(safeRowCount, i);
         break;
       }
+
       total += line.length;
     }
   }
@@ -227,7 +228,7 @@ function buildColumnFields(observes: Observe[], columns: Column[]) {
   }));
 }
 
-function observeFields(observes: Observe[], compact: boolean = false) {
+function observeFields(observes: Observe[], compact = false) {
   const columns: Column[] = [
     { name: 'Name', value: (observe) => observe.name },
     { name: 'URL', value: (observe) => observe.url },

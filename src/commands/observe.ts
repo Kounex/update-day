@@ -44,12 +44,10 @@ export default class implements Command {
           'How often to check | Hourly is the default'
         )
         .setChoices(
-          ScrapeInterval.enumValues.map((type) => {
-            return {
+          ScrapeInterval.enumValues.map((type) => ({
               name: ScrapeInterval.enumText(type),
               value: type,
-            };
-          })
+            }))
         )
     )
     .addStringOption((option) =>
@@ -77,7 +75,7 @@ export default class implements Command {
   ): Promise<void> {
     const observe = Observe.create(
       interaction.guildId!,
-      interaction.user.id!,
+      interaction.user.id,
       Date.now(),
       0,
       interaction.options.getString('name')!,

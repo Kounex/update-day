@@ -50,12 +50,10 @@ export default class implements Command {
         .setName('scrape-interval')
         .setDescription('New scrape interval - leave empty to keep the current one')
         .setChoices(
-          ScrapeInterval.enumValues.map((type) => {
-            return {
+          ScrapeInterval.enumValues.map((type) => ({
               name: ScrapeInterval.enumText(type),
               value: type,
-            };
-          })
+            }))
         )
     )
     .addStringOption((option) =>
@@ -128,7 +126,7 @@ export default class implements Command {
   public async handleAutocompleteInteraction(
     interaction: AutocompleteInteraction
   ): Promise<void> {
-    var options: string[] = [];
+    let options: string[] = [];
     const observes = await this.observeManager.getObserves({
       guildId: interaction.guildId!,
       userId: interaction.user.id,
@@ -136,7 +134,7 @@ export default class implements Command {
     const currentName = interaction.options.getString('current-name');
     const focusedOption = interaction.options.getFocused(true);
 
-    var observe;
+    let observe;
     if (currentName != null) {
       observe = observes.find((observe) => observe.name == currentName);
     }
@@ -146,29 +144,33 @@ export default class implements Command {
         options = observes.map((observe) => observe.name);
         break;
       }
+
       case 'name': {
-        if (!!observe) {
+        if (observe) {
           options = [observe.name];
         }
 
         break;
       }
+
       case 'url': {
-        if (!!observe) {
+        if (observe) {
           options = [observe.url];
         }
 
         break;
       }
+
       case 'css-selector': {
-        if (!!observe && observe.cssSelector != null) {
+        if (Boolean(observe) && observe.cssSelector != null) {
           options = [observe.cssSelector];
         }
 
         break;
       }
+
       case 'text': {
-        if (!!observe) {
+        if (observe) {
           options = [observe.watchText];
         }
 

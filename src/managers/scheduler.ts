@@ -6,7 +6,7 @@ import ObserveManager from './observe.js';
 
 @injectable()
 export default class {
-  private _inObservation: Observe[] = [];
+  private readonly _inObservation: Observe[] = [];
 
   constructor(
     @inject(TYPES.Managers.Observe)
@@ -35,8 +35,12 @@ export default class {
         // doesn't get stuck forever and never scraped again.
         this.observeManager
           .processObserve(observe)
-          .catch((error) => debug(error))
-          .finally(() => this.removeFromObservation(observe));
+          .catch((error) => {
+ debug(error);
+})
+          .finally(() => {
+ this.removeFromObservation(observe);
+});
       }
     }
   }

@@ -18,7 +18,7 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "typecheck": "tsc --noEmit",
-    "test": "npm run lint",
+    "test": "tsx --test \"src/**/*.test.ts\"",
     "start": "npm run env:set-database-url -- tsx src/scripts/migrate-and-start.ts",
     "dev": "npm run env:set-database-url -- tsx watch src/scripts/start.ts",
     "migrations:generate": "npm run prisma:with-env migrate dev",
@@ -28,7 +28,8 @@
     "env:set-database-url": "tsx src/scripts/run-with-database-url.ts",
     "release": "release-it",
     "build": "tsc",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "check": "npm run typecheck && npm run lint && npm test"
   },
   "devDependencies": {
     "@release-it/keep-a-changelog": "^8.0.1",
@@ -40,7 +41,6 @@
     "eslint-config-xo": "^0.45.0",
     "eslint-config-xo-typescript": "^5.0.0",
     "eslint-plugin-import": "2.32.0",
-    "husky": "^9.0.11",
     "prisma": "^5.22.0",
     "release-it": "^21.1.1",
     "type-fest": "^5.10.0",
@@ -66,12 +66,41 @@
       "import/extensions": [
         "error",
         "ignorePackages"
-      ]
-    }
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm test"
+      ],
+      "@typescript-eslint/object-curly-spacing": [
+        "error",
+        "always"
+      ],
+      "@typescript-eslint/comma-dangle": [
+        "error",
+        {
+          "arrays": "always-multiline",
+          "objects": "always-multiline",
+          "imports": "always-multiline",
+          "exports": "always-multiline",
+          "functions": "never",
+          "enums": "always-multiline",
+          "generics": "never",
+          "tuples": "always-multiline"
+        }
+      ],
+      "arrow-parens": [
+        "error",
+        "always"
+      ],
+      "operator-linebreak": "off",
+      "@typescript-eslint/indent": "off",
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/member-ordering": "off",
+      "@typescript-eslint/consistent-type-imports": "off",
+      "@typescript-eslint/consistent-type-definitions": "off",
+      "max-params": "off",
+      "eqeqeq": [
+        "error",
+        "smart"
+      ],
+      "no-eq-null": "off",
+      "capitalized-comments": "off"
     }
   },
   "dependencies": {

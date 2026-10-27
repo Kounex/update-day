@@ -79,6 +79,7 @@ export default class ScrapeService {
             } else {
               url = new URL(`https://${thumbnail}`);
             }
+
             observe.thumbnail = `${observeURL.origin}${url.pathname}`;
           } catch (error) {
             debug(error);
@@ -102,9 +103,10 @@ export default class ScrapeService {
         debug(error);
         try {
           await page.waitForNetworkIdle({ timeout: 1_000 });
-          if (!!initial) {
+          if (initial) {
             return new ScrapeResult(observe, ScrapeResultType.ElementNotFound);
           }
+
           return new ScrapeResult(observe, ScrapeResultType.Change);
         } catch (idleError) {
           debug(idleError);
@@ -117,8 +119,9 @@ export default class ScrapeService {
       // content until it scrolls into view - innerText reads as empty for
       // such a section even though the text is present in the DOM. Scroll
       // it into view first, same as a real visitor would, so it renders.
-      await scopeElement!.evaluate((el) =>
-        el.scrollIntoView({ block: 'center' })
+      await scopeElement.evaluate((el) => {
+ el.scrollIntoView({ block: 'center' });
+}
       );
       await new Promise((resolve) => setTimeout(resolve, 250));
 
@@ -126,7 +129,7 @@ export default class ScrapeService {
       // actually see rendered - hidden elements, <script>/<style> contents,
       // etc. are excluded, which matters a lot once the scope is as broad
       // as the whole page.
-      const text = await scopeElement!.evaluate(
+      const text = await scopeElement.evaluate(
         (el) => (el as HTMLElement).innerText ?? el.textContent ?? ''
       );
 
@@ -136,7 +139,7 @@ export default class ScrapeService {
         .includes(observe.watchText.toLocaleLowerCase().trim());
 
       if (!phraseStillPresent) {
-        if (!!initial) {
+        if (initial) {
           return new ScrapeResult(observe, ScrapeResultType.TextNotFound);
         }
 

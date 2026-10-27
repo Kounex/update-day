@@ -26,23 +26,28 @@ export class ScrapeResult {
       case ScrapeResultType.Change: {
         return 'Change detected, user should be notified!';
       }
+
       case ScrapeResultType.NoChange: {
         return 'No change detected.';
       }
+
       case ScrapeResultType.ElementNotFound: {
         return `Element with given CSS-Selector \`${this.observe.cssSelector}\` on website \`${this.observe.url}\` not found!`;
       }
+
       case ScrapeResultType.TextNotFound: {
         const where = this.observe.cssSelector
           ? `within \`${this.observe.cssSelector}\` `
           : '';
         return `Text \`${this.observe.watchText}\` not currently found ${where}on website \`${this.observe.url}\`! Make sure it's an exact match of what's shown on the page right now.`;
       }
+
       case ScrapeResultType.Timeout: {
         return `Your Observe \`${this.observe.name}\` on \`${this.observe.url}\` ran into a timeout!`;
       }
+
       case ScrapeResultType.Unknown: {
-        return `Unknown, not handled error occurred while trying to scrape:\n$observe`;
+        return 'Unknown, not handled error occurred while trying to scrape:\n$observe';
       }
     }
   }
