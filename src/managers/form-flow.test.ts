@@ -79,9 +79,11 @@ const fake = (customId = '', extra: Record<string, unknown> = {}) => {
   };
 };
 
-const submit = (draftId: string, values: Record<string, string>, mode: string, fromMessage = false) =>
+// `fromMessage`: the components of the message the form was opened from.
+const submit = (draftId: string, values: Record<string, string>, mode: string, fromMessage?: Array<{ components: Array<{ customId: string }> }>) =>
   fake(`${form.MODAL_PREFIX}${draftId}`, {
-    isFromMessage: () => fromMessage,
+    isFromMessage: () => fromMessage !== undefined,
+    message: fromMessage === undefined ? undefined : { components: fromMessage },
     fields: {
       getTextInputValue: (id: string) => values[id] ?? '',
       getRadioGroup: () => mode,
@@ -166,7 +168,9 @@ describe('form flow', () => {
     assert.equal(reopen.last('showModal').toJSON().components[0].component.value, 'Typo');
 
     nextPage = page(true);
-    const fixed = submit(draftId, { name: 'Typo', url: 'https://shop.test/item', text: 'sold out' }, WatchMode.Disappears, true);
+    const fixed = submit(draftId, { name: 'Typo', url: 'https://shop.test/item', text: 'sold out' }, WatchMode.Disappears, [
+      { components: [{ customId: `${form.DRAFT_INTERVAL}${draftId}` }] },
+    ]);
     await flow.handleModalSubmit(fixed.interaction);
     assert.ok(fixed.called('deferUpdate'));
     assert.ok(!fixed.called('deferReply'));
@@ -202,6 +206,22 @@ describe('form flow', () => {
     assert.equal(edited.name, 'Hoodie EU');
     assert.equal(edited.lastState, observe.lastState, 'state untouched by a non-target edit');
     assert.equal(edited.keepActive, true, 'settings not in the form are kept');
+  });
+
+  it('answers a form opened from a notification with its own reply, leaving the notification alone', async () => {
+    const observe = (await manager.findByName('guild', 'user', 'Hoodie EU'))!;
+    const opened = fake();
+    await flow.openEdit(opened.interaction, observe);
+    nextPage = page(false);
+    const submitted = submit(
+      openedDraftId(opened),
+      { name: observe.name, url: observe.url, text: observe.watchText },
+      observe.watchMode,
+      [{ components: [{ customId: `obs:pause:${observe.id}` }, { customId: `obs:edit:${observe.id}` }] }]
+    );
+    await flow.handleModalSubmit(submitted.interaction);
+    assert.ok(submitted.called('deferReply'));
+    assert.ok(!submitted.called('deferUpdate'));
   });
 
   it('cancels without saving', async () => {

@@ -21,6 +21,7 @@ import {
 } from '../utils/build-embed.js';
 import {
   buildDraftMessage,
+  DRAFT_PREFIX,
   buildObserveModal,
   DRAFT_CANCEL,
   DRAFT_FORM,
@@ -37,6 +38,20 @@ import ObserveManager from './observe.js';
 // A preview this recent is reused when saving instead of loading the page
 // once more.
 const REUSE_PREVIEW_MS = 5 * 60 * 1000;
+
+// Whether a message's components belong to a draft preview. Top-level
+// components come in several shapes (rows, containers, ...), hence unknown.
+const isDraftMessage = (rows: readonly unknown[]): boolean =>
+  rows.some((row) => {
+    const { components } = row as { components?: unknown };
+    return (
+      Array.isArray(components) &&
+      components.some((component: unknown) => {
+        const { customId } = component as { customId?: unknown };
+        return typeof customId === 'string' && customId.startsWith(DRAFT_PREFIX);
+      })
+    );
+  });
 
 type DraftInteraction =
   | ButtonInteraction
@@ -93,9 +108,14 @@ export default class FormFlow {
     }
 
     draft.input = readObserveModal(interaction.fields, draft.input);
-    // Submitted from the preview's "Edit form": update that message in
-    // place instead of piling up a new one.
-    if (interaction.isFromMessage()) {
+    // Submitted from the preview's own "Edit form": update that message in
+    // place instead of piling up a new one. A form opened from anything else
+    // - a notification's Edit button above all - gets its own reply, so the
+    // notification (and in a channel, everyone's view of it) stays intact.
+    if (
+      interaction.isFromMessage() &&
+      isDraftMessage(interaction.message.components)
+    ) {
       await interaction.deferUpdate();
     } else {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });

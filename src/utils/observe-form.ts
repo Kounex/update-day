@@ -149,13 +149,22 @@ export const readObserveModal = (
   fields: ModalFields,
   current: DraftInput
 ): DraftInput => {
+  // An optional field left empty may arrive without a value at all.
+  const text = (id: string): string => {
+    try {
+      return (fields.getTextInputValue(id) ?? '').trim();
+    } catch {
+      return '';
+    }
+  };
+
   const mode = fields.getRadioGroup(FIELD_MODE);
-  const selector = fields.getTextInputValue(FIELD_SELECTOR).trim();
+  const selector = text(FIELD_SELECTOR);
   return {
     ...current,
-    name: fields.getTextInputValue(FIELD_NAME).trim(),
-    url: fields.getTextInputValue(FIELD_URL).trim(),
-    watchText: fields.getTextInputValue(FIELD_TEXT).trim(),
+    name: text(FIELD_NAME),
+    url: text(FIELD_URL),
+    watchText: text(FIELD_TEXT),
     watchMode: Object.values(WatchMode).includes(mode as WatchMode)
       ? (mode as WatchMode)
       : current.watchMode,

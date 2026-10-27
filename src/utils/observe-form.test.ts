@@ -50,6 +50,18 @@ describe('readObserveModal', () => {
     });
   });
 
+  it('treats a missing value of an empty optional field as empty', () => {
+    const input = readObserveModal(
+      {
+        getTextInputValue: (id: string) => (id === 'name' ? 'n' : (undefined as unknown as string)),
+        getRadioGroup: () => null,
+      },
+      emptyDraftInput()
+    );
+    assert.equal(input.watchText, '');
+    assert.equal(input.cssSelector, null);
+  });
+
   it('keeps the current mode if none was picked', () => {
     const input = readObserveModal(fields({}, null), {
       ...emptyDraftInput(),
