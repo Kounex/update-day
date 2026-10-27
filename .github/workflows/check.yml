@@ -1,0 +1,51 @@
+# Gate for every change, Dependabot's included: dependabot-refresh.yml only
+# merges once all other checks on the PR passed, so a dependency bump that
+# breaks scraping (e.g. a Puppeteer/Chrome update) never auto-releases.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  code:
+    runs-on: ubuntu-24.04
+    # Same Node line as the image; full image for openssl/git (Prisma, checkout).
+    container: node:22-bookworm
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - run: yarn install --frozen-lockfile
+      - run: yarn prisma generate
+      - run: yarn typecheck
+      - run: yarn lint
+      - run: yarn test
+
+  image:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Containerfile
+          push: false
+          load: true
+          tags: update-day:check
+
+      - name: Scrape with the real Chrome inside the image
+        run: docker run --rm update-day:check node dist/scripts/smoke.js
+
+      - name: Migrate a fresh database and start up to the Discord login
+        run: |
+          mkdir -p data && chmod 777 data
+          out=$(docker run --rm -v "$PWD/data:/data" -e DISCORD_TOKEN=invalid.token.value update-day:check 2>&1 || true)
+          echo "$out"
+          echo "$out" | grep -q 'Database initialized.'
+          echo "$out" | grep -q 'TokenInvalid'
