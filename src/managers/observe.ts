@@ -260,7 +260,9 @@ export default class ObserveManager {
           nextScrapeAtMS: Math.min(common.nextScrapeAtMS, now + CONFIRM_RETRY_MS),
         },
         settings,
-        notify
+        notify,
+        // The first load of this check worked, so the old streak is over.
+        0
       );
       return { outcome: 'failed', scrapeResult: recheck };
     }
@@ -329,9 +331,12 @@ export default class ObserveManager {
     result: ScrapeError,
     common: Prisma.ObserveUpdateInput,
     settings: Awaited<ReturnType<SettingsService['getSettings']>>,
-    notify: boolean
+    notify: boolean,
+    // Failures in a row before this one - 0 when an earlier load of the
+    // same check already succeeded and ended the streak.
+    streakBefore = observe.consecutiveTimeouts
   ): Promise<void> {
-    const consecutive = observe.consecutiveTimeouts + 1;
+    const consecutive = streakBefore + 1;
     const total = observe.timeouts + 1;
     const limitReached = consecutive >= settings.consecutiveTimeoutsLimit;
 

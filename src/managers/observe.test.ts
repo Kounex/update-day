@@ -225,6 +225,20 @@ describe('ObserveManager', () => {
     assert.ok(Number(result.observe.nextScrapeAtMS) <= Date.now() + (5 * 60 * 1000));
   });
 
+  it('a failed confirmation after a good first load starts a new failure streak', async () => {
+    let observe = await create();
+    scraper.queue.push(failure(), failure());
+    observe = (await manager.processObserve(observe)).observe;
+    observe = (await manager.processObserve(observe)).observe;
+    assert.equal(observe.consecutiveTimeouts, 2);
+
+    scraper.queue.push(page(false), failure());
+    const result = await manager.processObserve(observe);
+    assert.equal(result.observe.consecutiveTimeouts, 1);
+    assert.equal(result.observe.active, true, 'not deactivated by fail, fail, ok, fail');
+    assert.equal(notifier.sent.length, 0);
+  });
+
   it('counts failures, never as a change, and deactivates at the limit', async () => {
     let observe = await create();
     for (let i = 0; i < 3; i++) {
