@@ -44,7 +44,7 @@
     "prisma": "^5.22.0",
     "release-it": "^21.1.2",
     "type-fest": "^5.10.0",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "eslintConfig": {
     "extends": [
