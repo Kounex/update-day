@@ -29,6 +29,10 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@prisma/*"
         update-types: ["version-update:semver-major"]
+      # Node's types follow the runtime major (node:22 image); they move with
+      # the planned Node 22 -> 24/26 migration, not on their own.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
