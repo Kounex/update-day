@@ -128,7 +128,7 @@
     ]
   },
   "dependencies": {
-    "@discordjs/builders": "1.14.1",
+    "@discordjs/builders": "1.15.0",
     "@discordjs/rest": "2.6.3",
     "@prisma/client": "5.22.0",
     "css-what": "^8.0.0",
