@@ -134,7 +134,7 @@
     "css-what": "^8.0.0",
     "debug": "^4.4.3",
     "discord-api-types": "0.38.57",
-    "discord.js": "14.27.0",
+    "discord.js": "14.28.0",
     "dotenv": "^18.0.9",
     "execa": "^10.2.1",
     "inversify": "^8.2.3",
