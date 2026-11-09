@@ -403,46 +403,46 @@
   resolved "https://registry.yarnpkg.com/@inquirer/type/-/type-4.2.0.tgz#e7cdfa8f663b263c7d7b392f85d40413a028cb9a"
   integrity sha512-2rnHX8RPo4glJYqnFc/v3nQeIhDcjyRRyaT7MGcfL/8xv/8K03SXYoA2tX06WVSKywWOE/ncbG3dtuzLjR5TCQ==
 
-"@inversifyjs/common@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@inversifyjs/common/-/common-2.0.1.tgz#5ae63d4f36d67ef5c4bc3e14befedf6271ed2fcb"
-  integrity sha512-pJAR4IAcT2jkYfZ9bD9XhtUDBLJRr8QOiSjb+2XyaHru6DLvu0VD2Id2iP7+tVRKkEe3XFUwDUEdKxcYlF699Q==
+"@inversifyjs/common@2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@inversifyjs/common/-/common-2.0.2.tgz#055af9caf958ee4b7f0c75365beb59d1e70b4f07"
+  integrity sha512-k7bXb6SVHEfUarVwYW6eNVLWXUcCSJKb+ilTpJ4OL5az3eDpLbkEzlrYAEix14PvTdA+k/1RSw5DaBpvRu1GGw==
 
-"@inversifyjs/container@3.1.3":
-  version "3.1.3"
-  resolved "https://registry.yarnpkg.com/@inversifyjs/container/-/container-3.1.3.tgz#5048912cd45cd956befbdc545df0fa0dff6b0856"
-  integrity sha512-+CZLXKzU5uwDbkY1WamY1Gnbtz0sNl62cqfd1vvI13Ei8Fe29sCwgfyEWMOzYcJhs2y2wBmYGANPDH5yq4VdTg==
+"@inversifyjs/container@3.1.4":
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/@inversifyjs/container/-/container-3.1.4.tgz#892af8971c3d474a856e5bdca8209b7ddf3889fb"
+  integrity sha512-wpapFx60VSRFZx10BgUmyUnFeKx9AXe936S/ZfutMwmpwjLwaqdWonU5/d+uUyIkmsY+vGzSDW51mxinz5mNag==
   dependencies:
-    "@inversifyjs/common" "2.0.1"
-    "@inversifyjs/core" "15.0.1"
-    "@inversifyjs/plugin" "0.3.1"
-    "@inversifyjs/reflect-metadata-utils" "1.5.0"
+    "@inversifyjs/common" "2.0.2"
+    "@inversifyjs/core" "15.0.2"
+    "@inversifyjs/plugin" "0.3.2"
+    "@inversifyjs/reflect-metadata-utils" "1.5.1"
 
-"@inversifyjs/core@15.0.1":
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/@inversifyjs/core/-/core-15.0.1.tgz#b692011771283e82df3f50fdf5b55342691e478d"
-  integrity sha512-4C/hLEdYo3xG0Ez61kTP3nikINmCQz1O3OHU7dfbi9UC6Of5Qly2CLd0OSoZd6M8fumk51A0tuBxPIqs28CpNg==
+"@inversifyjs/core@15.0.2":
+  version "15.0.2"
+  resolved "https://registry.yarnpkg.com/@inversifyjs/core/-/core-15.0.2.tgz#ce1da9e56bff7f9ea1c27a4cc1b147101e244a8e"
+  integrity sha512-IYczXNwGtWGLU0bIIqL+PdmbyjGrL1JvAbE+BjvCsdrkMoXUy4zeLHiJP6bWydgZ4nzpyXK1v8kpOaWj2j97pQ==
   dependencies:
-    "@inversifyjs/common" "2.0.1"
-    "@inversifyjs/prototype-utils" "0.2.1"
-    "@inversifyjs/reflect-metadata-utils" "1.5.0"
+    "@inversifyjs/common" "2.0.2"
+    "@inversifyjs/prototype-utils" "0.2.2"
+    "@inversifyjs/reflect-metadata-utils" "1.5.1"
 
-"@inversifyjs/plugin@0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@inversifyjs/plugin/-/plugin-0.3.1.tgz#0f5d889880eaea2fa38c3c9920efc5b46a019056"
-  integrity sha512-ByklTw731fydBCTMwMpkmwm+lv0U+JWm9NEqRsz3n5KzAC5Om2XtLjqzEC2w+8Ote3gVC3Qxsx6YmG9XLIZpvg==
+"@inversifyjs/plugin@0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@inversifyjs/plugin/-/plugin-0.3.2.tgz#0788840a14ae518369f0576dd7b95c04b283e9b7"
+  integrity sha512-1s3Jdnv/rtrTjN1WlfwLlNRUf5OJIaxvThIi05EkYhlxqZTsH1cfpR3INzEZyFyNTEf58eYdIvDh9J9iXiTtIg==
 
-"@inversifyjs/prototype-utils@0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@inversifyjs/prototype-utils/-/prototype-utils-0.2.1.tgz#dc3ab52ef94dc3017d9953025747134f756c15a6"
-  integrity sha512-53cVE3cw+RxnSkGlg+jOFNSox2owJF9Fv3HgFKe4f+4aPullscltIiio88QRkx2Sc5yo3VlqPsXQFGw2CVJZnw==
+"@inversifyjs/prototype-utils@0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@inversifyjs/prototype-utils/-/prototype-utils-0.2.2.tgz#cc505346fb1c4c179af9e652a9e9cfb494cfff2f"
+  integrity sha512-0Z8jXDuzT3gJ6o0lk9brfZJwlwdumDJIXKq8x52sDK0cymShYQ+C1MqqxSyDDiWKQBkrOHQ7cUW4kYk1h9Rpeg==
   dependencies:
-    "@inversifyjs/common" "2.0.1"
+    "@inversifyjs/common" "2.0.2"
 
-"@inversifyjs/reflect-metadata-utils@1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@inversifyjs/reflect-metadata-utils/-/reflect-metadata-utils-1.5.0.tgz#499894c50b78da44301217e33c56989db4ccc62d"
-  integrity sha512-NpJVbRbuQ6Ao2vO+aw96un3oHDFCwXI0+pplsFt0Jh0gyR8DWk4m7ml/GBNMjdbeKVW/QgJ2S6NGXjk042uwqg==
+"@inversifyjs/reflect-metadata-utils@1.5.1":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@inversifyjs/reflect-metadata-utils/-/reflect-metadata-utils-1.5.1.tgz#3da983655de8d3c52ef1121b1d3bac26474c5cb4"
+  integrity sha512-Vd8Twf20rbIQqGyH69wEHJN91JQ1jMbNp/ezdXqaagbgSyvfeWaZ0ULS0u/whfh2IXWbop+noFZZyLBhkXZ6nA==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -1359,10 +1359,10 @@ discord-api-types@0.38.57, discord-api-types@^0.38.1, discord-api-types@^0.38.33
   resolved "https://registry.yarnpkg.com/discord-api-types/-/discord-api-types-0.38.57.tgz#f9ab83136401e284079462ac0c6b5c6509efeb6e"
   integrity sha512-R1CTSSt4RshqCq23j2Xq2ZscvzB4LzG9OB1CYQdKUGdw8Ti/oF/72EEtK2mNpagG/Vj9NcBT7dw9lKLf+Dacfg==
 
-discord.js@14.28.0:
-  version "14.28.0"
-  resolved "https://registry.yarnpkg.com/discord.js/-/discord.js-14.28.0.tgz#bcc2e2c39466dd742d1d5d275fa399e3f84d2482"
-  integrity sha512-l/mIllvqvWQDWqa8NPw7b2AU2tM9oPWiWR6Jk54DTNlUdyArXbi+Y0m0sLIUtQ9O0x+tyVpDMCG6K6Kf0yeAWQ==
+discord.js@14.28.1:
+  version "14.28.1"
+  resolved "https://registry.yarnpkg.com/discord.js/-/discord.js-14.28.1.tgz#1b165c8854c7798d903201b92045905f6fc04b9a"
+  integrity sha512-Je5OcqgurnIUQK4vR+gQnmzOf/lNQsD6d/UkV8ZOj+bFa5zJXPyiGXlbywp2EagwshVT18y7YNQNSRd3FjYkDw==
   dependencies:
     "@discordjs/builders" "^1.15.0"
     "@discordjs/collection" "1.5.3"
@@ -2361,14 +2361,14 @@ internal-slot@^1.1.0:
     hasown "^2.0.2"
     side-channel "^1.1.0"
 
-inversify@^8.2.3:
-  version "8.2.3"
-  resolved "https://registry.yarnpkg.com/inversify/-/inversify-8.2.3.tgz#a7ce112d63466467e6d164603f637ba33c7103d2"
-  integrity sha512-OmTj/HB/lEV6WFaeHXBDXdUYWwtadF8QTbyEKT7LUZMzOkw5xF+Nrm1GTjIhBOrAUN4K65vtqKgxRWlSHzQH7w==
+inversify@^8.2.4:
+  version "8.2.4"
+  resolved "https://registry.yarnpkg.com/inversify/-/inversify-8.2.4.tgz#36498fd350a797b31a25bd3ca5743533da377002"
+  integrity sha512-kEIzWRoL4IyvZzo/p7c2T1Y0pxE4X7jfI+znkh44PQ6WCh3k+6HYYAMAiR2vKTzxei53qLSVo0D101fUHjR+HQ==
   dependencies:
-    "@inversifyjs/common" "2.0.1"
-    "@inversifyjs/container" "3.1.3"
-    "@inversifyjs/core" "15.0.1"
+    "@inversifyjs/common" "2.0.2"
+    "@inversifyjs/container" "3.1.4"
+    "@inversifyjs/core" "15.0.2"
 
 ip-address@^10.1.1:
   version "10.7.5"
