@@ -140,7 +140,7 @@
     "inversify": "^8.2.4",
     "nodesplash": "^0.1.1",
     "ora": "^9.4.1",
-    "p-retry": "^8.0.1",
+    "p-retry": "^9.0.0",
     "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0",
     "puppeteer": "^25.16.0",
